@@ -22,7 +22,8 @@ from dash.dependencies import Input, Output, State
 from dash.exceptions import PreventUpdate
 
 from demo_interface import generate_problem_details_table_rows
-from src.demo_enums import SolverType
+from src.demo_enums import Advantage2System, AdvantageSystem
+from src.utils import get_chip_intersection_graph
 
 
 @dash.callback(
@@ -53,14 +54,18 @@ def toggle_left_column(collapse_trigger: int, to_collapse_class: str) -> str:
 
 
 @dash.callback(
-    Output("input", "children"),
+    Output("advantage_graph", "figure"),
+    Output("advantage2_graph", "figure"),
     inputs=[
-        Input("slider", "value"),
+        Input("advantage-setting", "value"),
+        Input("advantage2-setting", "value"),
     ],
 )
-def render_initial_state(slider_value: int) -> str:
+def render_initial_state(
+    advantage_system: Union[AdvantageSystem, int],
+    advantage2_system: Union[Advantage2System, int]
+) -> str:
     """Runs on load and any time the value of the slider is updated.
-        Add `prevent_initial_call=True` to skip on load runs.
 
     Args:
         slider_value: The value of the slider.
@@ -68,7 +73,11 @@ def render_initial_state(slider_value: int) -> str:
     Returns:
         str: The content of the input tab.
     """
-    return f"Put demo input here. The current slider value is {slider_value}."
+    advantage_system = AdvantageSystem(advantage_system)
+    advantage2_system = Advantage2System(advantage2_system)
+
+    graph, graph2 = get_chip_intersection_graph(advantage_system.label, advantage2_system.label)
+    return graph, graph2
 
 
 class RunOptimizationReturn(NamedTuple):
@@ -89,12 +98,12 @@ class RunOptimizationReturn(NamedTuple):
         # The first string in the Input/State elements below must match an id in demo_interface.py
         # Remove or alter the following id's to match any changes made to demo_interface.py
         Input("run-button", "n_clicks"),
-        State("solver-type-select", "value"),
-        State("solver-time-limit", "value"),
-        State("slider", "value"),
-        State("dropdown", "value"),
-        State("checklist", "value"),
-        State("radio", "value"),
+        State("anneal-type-setting", "value"),
+        State("annealing-time-setting", "value"),
+        State("precision-setting", "value"),
+        State("advantage-setting", "value"),
+        State("advantage2-setting", "value"),
+        State("random-seed-setting", "value"),
     ],
     running=[
         (Output("cancel-button", "className"), "", "display-none"),  # Show/hide cancel button.
@@ -111,12 +120,12 @@ def run_optimization(
     # The parameters below must match the `Input` and `State` variables found
     # in the `inputs` list above.
     run_click: int,
-    solver_type: Union[SolverType, int],
-    time_limit: float,
-    slider_value: int,
-    dropdown_value: int,
-    checklist_value: list,
-    radio_value: int,
+    anneal_type: int,
+    anneal_time: int,
+    precision: int,
+    advantage_system: Union[AdvantageSystem, int],
+    advantage2_system: Union[Advantage2System, int],
+    random_seed: int,
 ) -> RunOptimizationReturn:
     """Runs the optimization and updates UI accordingly.
 
@@ -127,7 +136,7 @@ def run_optimization(
 
     Args:
         run_click: The (total) number of times the run button has been clicked.
-        solver_type: The solver to use for the optimization run defined by SolverType in demo_enums.py.
+        solver_type: The solver to use for the optimization run defined by AdvantageSystem in demo_enums.py.
         time_limit: The solver time limit.
         slider_value: The value of the slider.
         dropdown_value: The value of the dropdown.
@@ -148,7 +157,8 @@ def run_optimization(
     if run_click == 0 or ctx.triggered_id != "run-button":
         raise PreventUpdate
 
-    solver_type = SolverType(solver_type)
+    advantage_system = AdvantageSystem(advantage_system)
+    advantage2_system = AdvantageSystem(advantage2_system)
 
 
     ###########################
@@ -158,8 +168,8 @@ def run_optimization(
 
     # Generates a list of table rows for the problem details table.
     problem_details_table = generate_problem_details_table_rows(
-        solver=solver_type.label,
-        time_limit=time_limit,
+        solver=advantage_system.label,
+        time_limit=0,
     )
 
     return RunOptimizationReturn(

@@ -32,27 +32,18 @@ This is a Dash template for new examples. It includes some basic settings, tabs,
 # Sliders, buttons and option entries #
 #######################################
 
-# an example slider
-SLIDER = {
+ANNEAL_TIME = {
     "min": 1,
     "max": 10,
     "step": 1,
     "value": 5,
 }
 
-# an example dropdown
-DROPDOWN = ["Option 1", "Option 2"]
-
-# an example checklist
-CHECKLIST = ["Option 1", "Option 2"]
-
-# an example radio list
-RADIO = ["Option 1", "Option 2"]
-
-# solver time limits in seconds (value means default)
-SOLVER_TIME = {
-    "min": 10,
-    "max": 300,
-    "step": 5,
-    "value": 10,
+PRECISION = {
+    "min": 1,
+    "max": 100,
+    "step": 1,
+    "value": 5,
 }
+
+ANNEAL_TYPE = ["Standard Anneal", "Fast Anneal"]

@@ -15,7 +15,7 @@
 from enum import Enum
 
 
-class SolverType(Enum):
+class AdvantageSystem(Enum):
     """Add a list of solver options here. If this demo only requires 1 solver,
     this functionality can be removed.
     """
@@ -26,10 +26,22 @@ class SolverType(Enum):
     @property
     def label(self):
         return {
-            SolverType.SOLVER_1: "Solver 1",
-            SolverType.SOLVER_2: "Solver 2",
+            AdvantageSystem.SOLVER_1: "Advantage_system4.1",
+            AdvantageSystem.SOLVER_2: "Solver 2",
         }[self]
 
+class Advantage2System(Enum):
+    """Add a list of solver options here. If this demo only requires 1 solver,
+    this functionality can be removed.
+    """
 
-### If any settings or variables are being used repeatedly, thoughout the code, create a new
-### Enum for the setting here to avoid string comparisons or other fragile code practices.
+    SOLVER_1 = 0
+    SOLVER_2 = 1
+
+    @property
+    def label(self):
+        return {
+            Advantage2System.SOLVER_1: "BAY20_Z12_ALPHA",
+            Advantage2System.SOLVER_2: "Solver 2",
+        }[self]
+

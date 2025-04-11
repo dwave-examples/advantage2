@@ -36,13 +36,10 @@ custom CSS can be added below.
     border-right: none;
 }
 
-.input, .results {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100%;
+.input {
+    height: initial !important;
 }
 
-  /****************************/
- /*** CUSTOM CSS GOES HERE ***/
-/****************************/
+.graph {
+    height: 100%;
+}
