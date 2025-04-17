@@ -18,6 +18,8 @@ from __future__ import annotations
 from dash import dcc, html
 
 from demo_configs import (
+    DEFAULT_ADVANTAGE,
+    DEFAULT_ADVANTAGE2,
     DESCRIPTION,
     MAIN_HEADER,
     PRECISION,
@@ -25,7 +27,24 @@ from demo_configs import (
     THEME_COLOR_SECONDARY,
     THUMBNAIL,
 )
-from src.demo_enums import Advantage2System, AdvantageSystem, AnnealType, SchemeType
+from src.demo_enums import AnnealType, SchemeType
+from dwave.cloud import Client
+
+
+# Initialize: available QPUs, initial progress-bar status
+try:
+    client = Client.from_config(client="qpu")
+    qpus = [
+        qpu.name for qpu in client.get_solvers(fast_anneal_time_range__covers=[0.005, 0.1])
+    ]
+    if len(qpus) < 1:
+        raise Exception
+
+except Exception:
+    qpus = {}
+
+advantage_solvers = [solver for solver in qpus if solver.split("_")[0] == "Advantage"]
+advantage2_solvers = [solver for solver in qpus if solver.split("_")[0] == "Advantage2"]
 
 
 def slider(label: str, id: str, config: dict) -> html.Div:
@@ -57,7 +76,7 @@ def slider(label: str, id: str, config: dict) -> html.Div:
     )
 
 
-def dropdown(label: str, id: str, options: list) -> html.Div:
+def dropdown(label: str, id: str, options: list, value=None) -> html.Div:
     """Dropdown element for option selection.
 
     Args:
@@ -72,34 +91,9 @@ def dropdown(label: str, id: str, options: list) -> html.Div:
             dcc.Dropdown(
                 id=id,
                 options=options,
-                value=options[0]["value"],
+                value=value if value else options[0]["value"],
                 clearable=False,
                 searchable=False,
-            ),
-        ],
-    )
-
-
-def checklist(label: str, id: str, options: list, values: list, inline: bool = True) -> html.Div:
-    """Checklist element for option selection.
-
-    Args:
-        label: The title that goes above the checklist.
-        id: A unique selector for this element.
-        options: A list of dictionaries of labels and values.
-        values: A list of values that should be preselected in the checklist.
-        inline: Whether the options of the checklist are displayed beside or below each other.
-    """
-    return html.Div(
-        className="checklist-wrapper",
-        children=[
-            html.Label(label),
-            dcc.Checklist(
-                id=id,
-                className=f"checklist{' checklist--inline' if inline else ''}",
-                inline=inline,
-                options=options,
-                value=values,
             ),
         ],
     )
@@ -143,32 +137,23 @@ def generate_settings_form() -> html.Div:
     """
     radio_options_anneal = generate_options(AnnealType)
     radio_options_scheme = generate_options(SchemeType)
-    advantage_options = generate_options(AdvantageSystem)
-    advantage2_options = generate_options(Advantage2System)
+    advantage_options = [{"label": qpu_name, "value": qpu_name} for qpu_name in advantage_solvers]
+    advantage2_options = [{"label": qpu_name, "value": qpu_name} for qpu_name in advantage2_solvers]
 
     return html.Div(
         className="settings",
         children=[
-            # dropdown(
-            #     "Example Dropdown",
-            #     "dropdown",
-            #     sorted(dropdown_options, key=lambda op: op["value"]),
-            # ),
-            # checklist(
-            #     "Example Checklist",
-            #     "checklist",
-            #     sorted(checklist_options, key=lambda op: op["value"]),
-            #     [0],
-            # ),
             dropdown(
                 "Advantage2 System",
                 "advantage2-setting",
                 sorted(advantage2_options, key=lambda op: op["value"]),
+                value=DEFAULT_ADVANTAGE2 if DEFAULT_ADVANTAGE2 in advantage2_solvers else advantage2_solvers[0],
             ),
             dropdown(
                 "Advantage Comparison System",
                 "advantage-setting",
                 sorted(advantage_options, key=lambda op: op["value"]),
+                value=DEFAULT_ADVANTAGE if DEFAULT_ADVANTAGE in advantage_solvers else advantage_solvers[0],
             ),
             radio(
                 "Anneal Type",

@@ -24,7 +24,7 @@ from dash.exceptions import PreventUpdate
 
 
 from demo_interface import generate_problem_details_table_rows
-from src.demo_enums import Advantage2System, AdvantageSystem, AnnealType, SchemeType
+from src.demo_enums import AnnealType, SchemeType
 from src.utils import deserialize, get_chip_intersection_graph, plot_solution, serialize
 
 
@@ -66,8 +66,8 @@ def toggle_left_column(collapse_trigger: int, to_collapse_class: str) -> str:
     ],
 )
 def render_initial_state(
-    advantage_system: Union[AdvantageSystem, int],
-    advantage2_system: Union[Advantage2System, int]
+    advantage_system: str,
+    advantage2_system: str
 ) -> str:
     """Runs on load and any time the value of the slider is updated.
 
@@ -77,11 +77,9 @@ def render_initial_state(
     Returns:
         str: The content of the input tab.
     """
-    advantage_system = AdvantageSystem(advantage_system)
-    advantage2_system = Advantage2System(advantage2_system)
 
     graph, graph2, chimera_g, best_mapping = get_chip_intersection_graph(
-        advantage_system.label, advantage2_system.label
+        advantage_system, advantage2_system
     )
     return graph, graph2, serialize(chimera_g), serialize(best_mapping)
 
@@ -123,8 +121,8 @@ def run_optimization(
     anneal_type: int,
     anneal_time: int,
     precision: int,
-    advantage_system: Union[AdvantageSystem, int],
-    advantage2_system: Union[Advantage2System, int],
+    advantage_system: str,
+    advantage2_system: str,
     random_seed: int,
     chimera_g,
     best_mapping,
@@ -159,8 +157,6 @@ def run_optimization(
     if run_click == 0 or ctx.triggered_id != "run-button":
         raise PreventUpdate
 
-    advantage_system = AdvantageSystem(advantage_system)
-    advantage2_system = Advantage2System(advantage2_system)
     scheme_type = SchemeType(scheme_type)
     anneal_type = AnnealType(anneal_type)
 
@@ -173,17 +169,15 @@ def run_optimization(
     chimera_g = deserialize(chimera_g)
     best_mapping = deserialize(best_mapping)
 
-    bqm = generator(precision, chimera_g)
+    bqm = generator(precision, chimera_g, seed=random_seed)
 
     fig = plot_solution(
-        bqm, advantage_system.label, advantage2_system.label, anneal_time, chimera_g, best_mapping, anneal_type 
+        bqm, advantage_system, advantage2_system, anneal_time, chimera_g, best_mapping, anneal_type 
     )
-
-
 
     # Generates a list of table rows for the problem details table.
     problem_details_table = generate_problem_details_table_rows(
-        solver=advantage_system.label,
+        solver=advantage_system,
         time_limit=0,
     )
 
