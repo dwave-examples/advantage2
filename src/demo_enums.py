@@ -41,7 +41,37 @@ class Advantage2System(Enum):
     @property
     def label(self):
         return {
-            Advantage2System.SOLVER_1: "BAY20_Z12_ALPHA",
+            Advantage2System.SOLVER_1: "Advantage2_system1.1",
             Advantage2System.SOLVER_2: "Solver 2",
+        }[self]
+
+class AnnealType(Enum):
+    """Add a list of solver options here. If this demo only requires 1 solver,
+    this functionality can be removed.
+    """
+
+    STANDARD = 0
+    FAST = 1
+
+    @property
+    def label(self):
+        return {
+            AnnealType.STANDARD: "Standard Anneal",
+            AnnealType.FAST: "Fast Anneal",
+        }[self]
+
+class SchemeType(Enum):
+    """Add a list of solver options here. If this demo only requires 1 solver,
+    this functionality can be removed.
+    """
+
+    UNIFORM = 0
+    POWER_LAW = 1
+
+    @property
+    def label(self):
+        return {
+            SchemeType.UNIFORM: "Uniform",
+            SchemeType.POWER_LAW: "Power Law",
         }[self]
 

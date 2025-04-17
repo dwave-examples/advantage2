@@ -22,10 +22,10 @@ THEME_COLOR_SECONDARY = "#2A7DE1"  # D-Wave blue default #2A7DE1
 
 THUMBNAIL = "static/dwave_logo.svg"
 
-APP_TITLE = "Demo Name"
-MAIN_HEADER = "Demo Name"
+APP_TITLE = "Advantage2"
+MAIN_HEADER = "Advantage2"
 DESCRIPTION = """\
-This is a Dash template for new examples. It includes some basic settings, tabs, and styling.
+This demo compares the Advantage2 system to the Advantage by finding a Zephyr-Pegasus intersection graph.
 """
 
 #######################################
@@ -40,10 +40,8 @@ ANNEAL_TIME = {
 }
 
 PRECISION = {
-    "min": 1,
-    "max": 100,
-    "step": 1,
-    "value": 5,
+    "min": 10,
+    "max": 1000,
+    "step": 10,
+    "value": 100,
 }
-
-ANNEAL_TYPE = ["Standard Anneal", "Fast Anneal"]

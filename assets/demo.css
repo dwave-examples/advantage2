@@ -43,3 +43,17 @@ custom CSS can be added below.
 .graph {
     height: 100%;
 }
+
+.graph-wrapper {
+    display: flex;
+    margin-top: 3rem;
+}
+
+.input .graph {
+    width: calc(48vw - var(--left-col-width)/2);
+    height: calc((50vw - var(--left-col-width)/2));
+}
+
+.graph-wrapper > div {
+    position: relative;
+}

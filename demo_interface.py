@@ -21,12 +21,11 @@ from demo_configs import (
     DESCRIPTION,
     MAIN_HEADER,
     PRECISION,
-    ANNEAL_TYPE,
     ANNEAL_TIME,
     THEME_COLOR_SECONDARY,
     THUMBNAIL,
 )
-from src.demo_enums import Advantage2System, AdvantageSystem
+from src.demo_enums import Advantage2System, AdvantageSystem, AnnealType, SchemeType
 
 
 def slider(label: str, id: str, config: dict) -> html.Div:
@@ -131,9 +130,9 @@ def radio(label: str, id: str, options: list, value: int, inline: bool = True) -
     )
 
 
-def generate_options(options_list: list) -> list[dict]:
+def generate_options(types) -> list[dict]:
     """Generates options for dropdowns, checklists, radios, etc."""
-    return [{"label": label, "value": i} for i, label in enumerate(options_list)]
+    return [{"label": type.label, "value": type.value} for type in types]
 
 
 def generate_settings_form() -> html.Div:
@@ -142,15 +141,10 @@ def generate_settings_form() -> html.Div:
     Returns:
         html.Div: A Div containing the settings for selecting the scenario, model, and solver.
     """
-    radio_options = generate_options(ANNEAL_TYPE)
-
-    advantage_options = [
-        {"label": advantage.label, "value": advantage.value} for advantage in AdvantageSystem
-    ]
-
-    advantage2_options = [
-        {"label": advantage2.label, "value": advantage2.value} for advantage2 in Advantage2System
-    ]
+    radio_options_anneal = generate_options(AnnealType)
+    radio_options_scheme = generate_options(SchemeType)
+    advantage_options = generate_options(AdvantageSystem)
+    advantage2_options = generate_options(Advantage2System)
 
     return html.Div(
         className="settings",
@@ -179,13 +173,19 @@ def generate_settings_form() -> html.Div:
             radio(
                 "Anneal Type",
                 "anneal-type-setting",
-                sorted(radio_options, key=lambda op: op["value"]),
+                sorted(radio_options_anneal, key=lambda op: op["value"]),
                 0,
             ),
             slider(
                 "Annealing Time",
                 "annealing-time-setting",
                 ANNEAL_TIME,
+            ),
+            radio(
+                "Scheme",
+                "scheme-type-setting",
+                sorted(radio_options_scheme, key=lambda op: op["value"]),
+                0,
             ),
             slider(
                 "Precision",
@@ -299,7 +299,10 @@ def create_interface():
         id="app-container",
         children=[
             # Below are any temporary storage items, e.g., for sharing data between callbacks.
-            dcc.Store(id="run-in-progress", data=False),  # Indicates whether run is in progress
+            dcc.Store(id="pegasus-qpu"),
+            dcc.Store(id="zephyr-qpu"),
+            dcc.Store(id="chimera-g"),
+            dcc.Store(id="best-mapping"),
             # Header brand banner
             html.Div(className="banner", children=[html.Img(src=THUMBNAIL)]),
             # Settings and results columns
@@ -354,28 +357,30 @@ def create_interface():
                                                 parent_className="input",
                                                 type="circle",
                                                 color=THEME_COLOR_SECONDARY,
-                                                children=html.Div(
-                                                    dcc.Graph(
-                                                        id="advantage_graph",
-                                                        responsive=True,
-                                                        config={"displayModeBar": False},
+                                                children=[
+                                                    html.Div(
+                                                        className="graph-wrapper",
+                                                        children=[
+                                                            html.Div(
+                                                                dcc.Graph(
+                                                                    id="advantage-graph",
+                                                                    responsive=True,
+                                                                    config={"displayModeBar": False},
+                                                                ),
+                                                                className="graph",
+                                                            ),
+                                                            html.Div(
+                                                                dcc.Graph(
+                                                                    id="advantage2-graph",
+                                                                    responsive=True,
+                                                                    config={"displayModeBar": False},
+                                                                ),
+                                                                className="graph",
+                                                            ),
+                                                        ]
                                                     ),
-                                                    className="graph",
-                                                ),
-                                            ),
-                                            dcc.Loading(
-                                                parent_className="input",
-                                                type="circle",
-                                                color=THEME_COLOR_SECONDARY,
-                                                children=html.Div(
-                                                    dcc.Graph(
-                                                        id="advantage2_graph",
-                                                        responsive=True,
-                                                        config={"displayModeBar": False},
-                                                    ),
-                                                    className="graph",
-                                                ),
-                                            ),
+                                                ]
+                                            )
                                         ],
                                     ),
                                     dcc.Tab(
@@ -392,7 +397,16 @@ def create_interface():
                                                         type="circle",
                                                         color=THEME_COLOR_SECONDARY,
                                                         # A Dash callback (in app.py) will generate content in the Div below
-                                                        children=html.Div(id="results"),
+                                                        children=html.Div(
+                                                            html.Div(
+                                                                dcc.Graph(
+                                                                    id="results-graph",
+                                                                    responsive=True,
+                                                                    config={"displayModeBar": False},
+                                                                ),
+                                                                className="graph",
+                                                            ),
+                                                        ),
                                                     ),
                                                     # Problem details dropdown
                                                     html.Div([html.Hr(), problem_details(1)]),
