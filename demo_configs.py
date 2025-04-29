@@ -35,16 +35,4 @@ This demo compares the Advantage2 system to the Advantage by finding a Zephyr-Pe
 DEFAULT_ADVANTAGE2 = "Advantage2_system1.1"
 DEFAULT_ADVANTAGE = "Advantage_system4.1"
 
-ANNEAL_TIME = {
-    "min": 1,
-    "max": 10,
-    "step": 1,
-    "value": 5,
-}
-
-PRECISION = {
-    "min": 10,
-    "max": 1000,
-    "step": 10,
-    "value": 100,
-}
+PRECISION = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024]

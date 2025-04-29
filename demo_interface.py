@@ -23,7 +23,6 @@ from demo_configs import (
     DESCRIPTION,
     MAIN_HEADER,
     PRECISION,
-    ANNEAL_TIME,
     THEME_COLOR_SECONDARY,
     THUMBNAIL,
 )
@@ -34,8 +33,16 @@ from dwave.cloud import Client
 # Initialize: available QPUs, initial progress-bar status
 try:
     client = Client.from_config(client="qpu")
+    ANNEAL_TIME_RANGES = {}
+    for qpu in client.get_solvers():
+        ANNEAL_TIME_RANGES[qpu.name] ={
+            "fast": qpu.properties["fast_anneal_time_range"],
+            "standard": qpu.properties["annealing_time_range"],
+        }
+    print(ANNEAL_TIME_RANGES)
+
     qpus = [
-        qpu.name for qpu in client.get_solvers(fast_anneal_time_range__covers=[0.005, 0.1])
+        qpu.name for qpu in client.get_solvers()
     ]
     if len(qpus) < 1:
         raise Exception
@@ -139,6 +146,10 @@ def generate_settings_form() -> html.Div:
     radio_options_scheme = generate_options(SchemeType)
     advantage_options = [{"label": qpu_name, "value": qpu_name} for qpu_name in advantage_solvers]
     advantage2_options = [{"label": qpu_name, "value": qpu_name} for qpu_name in advantage2_solvers]
+    precision = [{"label": option, "value": option} for option in PRECISION]
+
+    advantage = DEFAULT_ADVANTAGE if DEFAULT_ADVANTAGE in advantage_solvers else advantage_solvers[0]
+    advantage2 = DEFAULT_ADVANTAGE2 if DEFAULT_ADVANTAGE2 in advantage2_solvers else advantage2_solvers[0]
 
     return html.Div(
         className="settings",
@@ -147,13 +158,13 @@ def generate_settings_form() -> html.Div:
                 "Advantage2 System",
                 "advantage2-setting",
                 sorted(advantage2_options, key=lambda op: op["value"]),
-                value=DEFAULT_ADVANTAGE2 if DEFAULT_ADVANTAGE2 in advantage2_solvers else advantage2_solvers[0],
+                value=advantage2,
             ),
             dropdown(
                 "Advantage Comparison System",
                 "advantage-setting",
                 sorted(advantage_options, key=lambda op: op["value"]),
-                value=DEFAULT_ADVANTAGE if DEFAULT_ADVANTAGE in advantage_solvers else advantage_solvers[0],
+                value=advantage,
             ),
             radio(
                 "Anneal Type",
@@ -161,23 +172,25 @@ def generate_settings_form() -> html.Div:
                 sorted(radio_options_anneal, key=lambda op: op["value"]),
                 0,
             ),
-            slider(
-                "Annealing Time",
-                "annealing-time-setting",
-                ANNEAL_TIME,
+            html.Label("Annealing Time (microseconds)"),
+            dcc.Input(
+                id="annealing-time-setting",
+                type="number",
+                min=max(ANNEAL_TIME_RANGES[advantage]["standard"][0], ANNEAL_TIME_RANGES[advantage2]["standard"][0]),
+                max=min(ANNEAL_TIME_RANGES[advantage]["standard"][1], ANNEAL_TIME_RANGES[advantage2]["standard"][1]),
             ),
+            html.P(id="anneal-time-help"),
             radio(
                 "Scheme",
                 "scheme-type-setting",
                 sorted(radio_options_scheme, key=lambda op: op["value"]),
                 0,
             ),
-            slider(
+            dropdown(
                 "Precision",
                 "precision-setting",
-                PRECISION,
+                precision,
             ),
-
             html.Label("Random Seed (optional)"),
             dcc.Input(
                 id="random-seed-setting",

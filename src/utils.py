@@ -1,6 +1,5 @@
 from demo_configs import THEME_COLOR_SECONDARY
 from src.demo_enums import AnnealType
-import dimod
 import networkx as nx
 import dwave_networkx as dnx
 from dwave.system import DWaveSampler
@@ -108,11 +107,7 @@ def get_chip_intersection_graph(pegasus_qpu_name, zephyr_qpu_name):
     # search for the highest-yielded instersection graph
     best_mapping = {}
     for name, qpu_g, mapper in [
-        (
-            pegasus_qpu_name,
-            pegasus_qpu_g,
-            dnx.pegasus_sublattice_mappings,
-        ),
+        (pegasus_qpu_name, pegasus_qpu_g, dnx.pegasus_sublattice_mappings),
         (zephyr_qpu_name, zephyr_qpu_g, dnx.zephyr_sublattice_mappings),
     ]:
 
@@ -163,13 +158,30 @@ def plot_solution(
     pegasus_qpu = DWaveSampler(solver=pegasus_qpu_name)
     zephyr_qpu = DWaveSampler(solver=zephyr_qpu_name)  # accessed through alpha server atm
 
-    energies_pegasus = get_energies(pegasus_qpu_name, pegasus_qpu, best_mapping, chimera_g, annealing_time, anneal_type, bqm)
-    energies_zephyr = get_energies(zephyr_qpu_name, zephyr_qpu, best_mapping, chimera_g, annealing_time, anneal_type, bqm)
+    energies_pegasus = get_energies(
+        pegasus_qpu_name,
+        pegasus_qpu,
+        best_mapping,
+        chimera_g,
+        annealing_time,
+        anneal_type,
+        bqm
+    )
+    energies_zephyr = get_energies(
+        zephyr_qpu_name,
+        zephyr_qpu,
+        best_mapping,
+        chimera_g,
+        annealing_time,
+        anneal_type,
+        bqm
+    )
+
     df = pd.DataFrame({
         "Energy": energies_pegasus + energies_zephyr,
         "System": [pegasus_qpu_name] * len(energies_pegasus) + [zephyr_qpu_name] * len(energies_zephyr)
     })
-    print(len(energies_pegasus)/10)
+
     fig = px.histogram(df, x="Energy", color="System", nbins=int(len(energies_pegasus)/10))
     fig.update_layout(yaxis_title="Number of reads")
 
