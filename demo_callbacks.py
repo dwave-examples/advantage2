@@ -15,16 +15,19 @@
 from __future__ import annotations
 
 from typing import Union
+import networkx as nx
 
 import dimod
 import dash
 from dash import MATCH
 from dash.dependencies import Input, Output, State
+from dwave.system import DWaveSampler
+import plotly.graph_objects as go
 
 
 from demo_interface import ANNEAL_TIME_RANGES, generate_problem_details_table_rows
 from src.demo_enums import AnnealType, SchemeType
-from src.utils import deserialize, get_chip_intersection_graph, plot_solution, serialize
+from src.utils import deserialize, get_chip_intersection_graph, get_energies, plot_solution, serialize
 
 
 @dash.callback(
@@ -67,8 +70,8 @@ def toggle_left_column(collapse_trigger: int, to_collapse_class: str) -> str:
 def render_initial_state(
     advantage_system: str,
     advantage2_system: str
-) -> str:
-    """Update graphs when Advantage and Advantage2 systems change
+) -> tuple[go.Figure, go.Figure, str, str]:
+    """Update graphs when the selected Advantage and Advantage2 systems change
 
     Args:
         advantage2_system: The name of the Advantage2 system selected.
@@ -77,14 +80,14 @@ def render_initial_state(
     Returns:
         graph: Advantage graph.
         graph2: Advantage2 graph.
-        chimera_g: The intersection graph.
+        intersection_graph: The intersection graph.
         best_mapping: The mapping of the chimera graph onto each system (Advantage and Advantage2)
     """
 
-    graph, graph2, chimera_g, best_mapping = get_chip_intersection_graph(
+    graph, graph2, intersection_graph, best_mapping = get_chip_intersection_graph(
         advantage_system, advantage2_system
     )
-    return graph, graph2, serialize(chimera_g), serialize(best_mapping)
+    return graph, graph2, serialize(intersection_graph), serialize(best_mapping)
 
 
 @dash.callback(
@@ -101,7 +104,7 @@ def update_anneal_time(
     advantage_system: str,
     advantage2_system: str,
     anneal_type: str,
-) -> str:
+) -> tuple[float, float, str]:
     """Update annealing time min/max and help text.
 
     Args:
@@ -128,7 +131,7 @@ def update_anneal_time(
     Output("run-button", "disabled"),
     Input("annealing-time-setting", "value"),
 )
-def validate_anneal_time(anneal_time: int):
+def validate_anneal_time(anneal_time: int) -> bool:
     """Disable run button if no annealing time."""
     return not anneal_time
 
@@ -168,9 +171,9 @@ def run_optimization(
     scheme_type: Union[SchemeType, int],
     precision: int,
     random_seed: int,
-    chimera_g: str,
-    best_mapping: str,
-):
+    intersection_graph: nx.Graph,
+    best_mapping: dict,
+) -> tuple[go.Figure, list]:
     """Runs the optimization and updates UI accordingly.
 
     This is the main function which is called when the ``Run Optimization`` button is clicked.
@@ -187,7 +190,7 @@ def run_optimization(
         scheme_type: The SchemeType, either 0: UNIFORM or 1: POWER_LAW.
         precision: The precision for the problem
         random_seed: The random seed for the generator.
-        chimera_g: The intersection graph.
+        intersection_graph: The chimera intersection graph.
         best_mapping: The mapping of the chimera graph onto each system (Advantage and Advantage2)
 
     Returns:
@@ -201,14 +204,32 @@ def run_optimization(
     anneal_type = AnnealType(anneal_type)
 
     generator = dimod.generators.ran_r if scheme_type is SchemeType.UNIFORM else dimod.generators.power_r
-    chimera_g = deserialize(chimera_g)
+    intersection_graph = deserialize(intersection_graph)
     best_mapping = deserialize(best_mapping)
 
-    bqm = generator(precision, chimera_g, seed=random_seed)
+    bqm = generator(precision, intersection_graph, seed=random_seed)
 
-    fig = plot_solution(
-        bqm, advantage_system, advantage2_system, anneal_time, chimera_g, best_mapping, anneal_type 
+    pegasus_qpu = DWaveSampler(solver=advantage_system)
+    zephyr_qpu = DWaveSampler(solver=advantage2_system)
+
+    energies_pegasus = get_energies(
+        pegasus_qpu,
+        intersection_graph,
+        best_mapping[advantage_system],
+        anneal_time,
+        anneal_type,
+        bqm
     )
+    energies_zephyr = get_energies(
+        zephyr_qpu,
+        intersection_graph,
+        best_mapping[advantage2_system],
+        anneal_time,
+        anneal_type,
+        bqm
+    )
+
+    fig = plot_solution(advantage_system, advantage2_system, energies_pegasus, energies_zephyr)
 
     # Generates a list of table rows for the problem details table.
     problem_details_table = generate_problem_details_table_rows(

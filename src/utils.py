@@ -1,3 +1,4 @@
+from collections.abc import Mapping
 from demo_configs import THEME_COLOR_SECONDARY
 from src.demo_enums import AnnealType
 import networkx as nx
@@ -9,6 +10,7 @@ import base64
 from typing import Any
 import dill as pickle
 import pandas as pd
+from dimod import BinaryQuadraticModel
 
 def serialize(obj: Any) -> str:
     """Serialize the object using pickle"""
@@ -20,18 +22,30 @@ def deserialize(obj: str) -> Any:
     return pickle.loads(base64.b64decode(obj.encode("utf-8")))
 
 
-def get_edge_trace(G, pos, color, line_width):
+def get_edge_trace(
+    G: nx.Graph,
+    node_coords: dict[int, tuple],
+    color: str,
+    line_width: float
+) -> go.Scatter:
+    """Create a Plotly scatter trace of graph edges.
+
+    Args:
+        G (nx.Graph): The graph to plot.
+        node_coords (dict): Dictionary mapping nodes to (x, y) coordinates.
+        color (str): The color of the edges.
+        line_width (float): The width of the edges.
+
+    Returns:
+        go.Scatter: A Plotly scatter trace of edges.
+    """
     edge_x = []
     edge_y = []
-    for edge in G.edges():
-        x0, y0 = pos[edge[0]]
-        x1, y1 = pos[edge[1]]
-        edge_x.append(x0)
-        edge_x.append(x1)
-        edge_x.append(None)
-        edge_y.append(y0)
-        edge_y.append(y1)
-        edge_y.append(None)
+    for start, end in G.edges():
+        x0, y0 = node_coords[start]
+        x1, y1 = node_coords[end]
+        edge_x.extend([x0, x1, None])
+        edge_y.extend([y0, y1, None])
 
     edge_trace = go.Scatter(
         x=edge_x, y=edge_y,
@@ -43,13 +57,19 @@ def get_edge_trace(G, pos, color, line_width):
     return edge_trace
 
 
-def get_node_trace(G, pos, color):
-    node_x = []
-    node_y = []
-    for node in G.nodes():
-        x, y = pos[node]
-        node_x.append(x)
-        node_y.append(y)
+def get_node_trace(G: nx.Graph, node_coords: dict[int, tuple], color: str) -> go.Scatter:
+    """Create a Plotly scatter trace of graph nodes.
+
+    Args:
+        G (nx.Graph): The graph to plot.
+        pos (dict): Dictionary mapping nodes to (x, y) coordinates.
+        color (str): The node color.
+
+    Returns:
+        go.Scatter: A Plotly scatter trace of nodes.
+    """
+    node_x = [node_coords[node][0] for node in G.nodes()]
+    node_y = [node_coords[node][1] for node in G.nodes()]
 
     node_trace = go.Scatter(
         x=node_x, y=node_y,
@@ -64,21 +84,27 @@ def get_node_trace(G, pos, color):
     return node_trace
 
 
-def get_fig(G, subG, pos, title):
-    edge_trace = get_edge_trace(G, pos, "#AAAAAA", 0.5)
-    node_trace = get_node_trace(G, pos, "#AAAAAA")
-    edge_trace_sub = get_edge_trace(subG, pos, THEME_COLOR_SECONDARY, 1)
-    node_trace_sub = get_node_trace(subG, pos, THEME_COLOR_SECONDARY)
+def get_fig(G: nx.Graph, subG: nx.Graph, node_coords: dict[int, tuple], title: str) -> go.Figure:
+    """Generate a Plotly fig of a graph with highlighted subgraph.
+
+    Args:
+        G (nx.Graph): The complete graph.
+        subG (nx.Graph): The subgraph to highlight.
+        node_coords (dict): Dictionary mapping nodes to (x, y) coordinates.
+        title (str): The title of the figure.
+
+    Returns:
+        go.Figure: A Plotly figure showing a graph with highlighted subgraph.
+    """
+    edge_trace = get_edge_trace(G, node_coords, "#AAAAAA", 0.5)
+    node_trace = get_node_trace(G, node_coords, "#AAAAAA")
+    edge_trace_sub = get_edge_trace(subG, node_coords, THEME_COLOR_SECONDARY, 1)
+    node_trace_sub = get_node_trace(subG, node_coords, THEME_COLOR_SECONDARY)
 
     fig = go.Figure(
         data=[edge_trace, node_trace, edge_trace_sub, node_trace_sub],
         layout=go.Layout(
-            title=dict(
-                text=title,
-                font=dict(
-                    size=16
-                )
-            ),
+            title=dict(text=title, font=dict(size=16)),
             showlegend=False,
             hovermode='closest',
             margin=dict(b=20,l=0,r=0,t=40),
@@ -92,97 +118,131 @@ def get_fig(G, subG, pos, title):
     return fig
 
 
-def get_chip_intersection_graph(pegasus_qpu_name, zephyr_qpu_name):
+def get_chip_intersection_graph(
+    pegasus_qpu_name: str,
+    zephyr_qpu_name: str
+) -> tuple[go.Figure, go.Figure, nx.Graph, dict[int, Mapping]]:
+    """Find highest-yielding intersection graph between Pegasus/Advantage
+    system and Zephyr/Advantage2 system.
+
+    Args:
+        pegasus_qpu_name (str): The name of the Advantage system selected.
+        zephyr_qpu_name (str): The name of the Advantage2 system selected.
+
+    Returns:
+        A tuple containing:
+            fig (go.Figure): A Plotly fig of the intersection on the Pegasus graph associated with
+                the Advantage system selected.
+            fig2 (go.Figure): A Plotly fig of the intersection on the Zephyr graph associated with
+                the Advantage2 system selected.
+            intersection_graph (nx.Graph): The chimera intersection graph.
+            best_mapping (dict[str, Mapping]): A dict containing an intersection mapping for each
+                system.
+    """
+    # Load graphs for both Advantage and Advantage2
     pegasus_qpu = DWaveSampler(solver=pegasus_qpu_name)
+    zephyr_qpu = DWaveSampler(solver=zephyr_qpu_name)
     pegasus_qpu_g = pegasus_qpu.to_networkx_graph()
-    zephyr_qpu = DWaveSampler(solver=zephyr_qpu_name)  # accessed through alpha server atm
     zephyr_qpu_g = zephyr_qpu.to_networkx_graph()
 
+    # Find maximum chimera intersection that fits both topologies
     max_chimera_intersection = min(
         pegasus_qpu.properties["topology"]["shape"][0] - 1,
         zephyr_qpu.properties["topology"]["shape"][0] * 2,
     )
-    chimera_g = dnx.chimera_graph(max_chimera_intersection)
+    intersection_graph = dnx.chimera_graph(max_chimera_intersection)
 
-    # search for the highest-yielded instersection graph
+    # search for the highest-yielded intersection graph
     best_mapping = {}
     for name, qpu_g, mapper in [
         (pegasus_qpu_name, pegasus_qpu_g, dnx.pegasus_sublattice_mappings),
         (zephyr_qpu_name, zephyr_qpu_g, dnx.zephyr_sublattice_mappings),
     ]:
-
-        mappings = mapper(chimera_g, qpu_g)  # get all possible mappings between both graphs
+        # get all possible mappings between both graphs
+        mappings = mapper(intersection_graph, qpu_g)
 
         # select the most yielded mapping
         mapping = {}
         coupler_yield = 0
         for m in mappings:
-            edges = [edge for edge in chimera_g.edges if tuple(map(m, edge)) in qpu_g.edges]
+            edges = [edge for edge in intersection_graph.edges if tuple(map(m, edge)) in qpu_g.edges]
             if len(edges) > coupler_yield:
                 mapping = m
                 coupler_yield = len(edges)
 
         # add the defects to the chimera graph
         edges = [
-            edge for edge in chimera_g.edges if tuple(map(mapping, edge)) in qpu_g.edges
+            edge for edge in intersection_graph.edges if tuple(map(mapping, edge)) in qpu_g.edges
         ]
-        chimera_g = chimera_g.edge_subgraph(edges).copy()
+        intersection_graph = intersection_graph.edge_subgraph(edges).copy()
 
         best_mapping[name] = mapping
 
-    p_mapping = best_mapping[pegasus_qpu_name]
-    z_mapping = best_mapping[zephyr_qpu_name]
-
-    sub = nx.relabel_nodes(chimera_g, p_mapping)
-    sub2 = nx.relabel_nodes(chimera_g, z_mapping)
+    sub = nx.relabel_nodes(intersection_graph, best_mapping[pegasus_qpu_name])
+    sub2 = nx.relabel_nodes(intersection_graph, best_mapping[zephyr_qpu_name])
     pegasus_pos = dnx.drawing.pegasus_layout(dnx.pegasus_graph(16), crosses=True)
     zephyr_pos = dnx.drawing.zephyr_layout(dnx.zephyr_graph(12))
     
     fig = get_fig(pegasus_qpu_g, sub, pegasus_pos, "Advantage")
     fig2 = get_fig(zephyr_qpu_g, sub2, zephyr_pos, "Advantage2")
 
-    return fig, fig2, chimera_g, best_mapping
+    return fig, fig2, intersection_graph, best_mapping
 
 
-def get_energies(name, qpu, best_mapping, chimera_g, annealing_time, anneal_type, bqm):
-    mapping = {node: best_mapping[name](node) for node in chimera_g.nodes()}
+def get_energies(
+    qpu: DWaveSampler,
+    graph: nx.Graph,
+    qpu_mapping: Mapping,
+    annealing_time: float,
+    anneal_type: AnnealType,
+    bqm: BinaryQuadraticModel,
+) -> list[float]:
+    """Run a BQM on a given QPU using a mapped graph and return a list of resulting energies.
+
+    Args:
+        qpu (DWaveSampler): The qpu to run the problem on.
+        graph (nx.Graph): The chimera intersection graph.
+        qpu_mapping (Mapping): The mapping of the chimera graph onto each system (Advantage and Advantage2)
+        anneal_time (float): The anneal time in microseconds.
+        anneal_type (AnnealType): The AnnealType, either 0: STANDARD or 1: FAST.
+        bqm (BinaryQuadraticModel): The Binary Quadratic Model to solve.
+
+    Returns:
+        energies: A list of resulting energies.
+    """
+
+    mapping = {node: qpu_mapping(node) for node in graph.nodes()}
     mapped_bqm = bqm.relabel_variables(mapping, inplace=False)
     sampleset = qpu.sample(mapped_bqm, num_reads=1000, annealing_time=annealing_time, fast_anneal=anneal_type is AnnealType.FAST)
     energies = [e for e, o in zip(sampleset.record.energy, sampleset.record.num_occurrences) for _ in range(o)]
+
     return energies
 
 
 def plot_solution(
-    bqm, pegasus_qpu_name, zephyr_qpu_name, annealing_time, chimera_g, best_mapping, anneal_type
-):
-    pegasus_qpu = DWaveSampler(solver=pegasus_qpu_name)
-    zephyr_qpu = DWaveSampler(solver=zephyr_qpu_name)  # accessed through alpha server atm
+    pegasus_qpu_name: str,
+    zephyr_qpu_name: str,
+    energies_pegasus: list,
+    energies_zephyr: list,
+) -> go.Figure:
+    """Plot histogram comparing energies.
 
-    energies_pegasus = get_energies(
-        pegasus_qpu_name,
-        pegasus_qpu,
-        best_mapping,
-        chimera_g,
-        annealing_time,
-        anneal_type,
-        bqm
-    )
-    energies_zephyr = get_energies(
-        zephyr_qpu_name,
-        zephyr_qpu,
-        best_mapping,
-        chimera_g,
-        annealing_time,
-        anneal_type,
-        bqm
-    )
+    Args:
+        pegasus_qpu_name (str): The name of the Advantage system selected.
+        zephyr_qpu_name (str): The name of the Advantage2 system selected.
+        energies_pegasus (list): A list of resulting energies from the Advantage system.
+        energies_zephyr (list): A list of resulting energies from the Advantage2 system.
+
+    Returns:
+        fig: The histogram comparing energies.
+    """
 
     df = pd.DataFrame({
         "Energy": energies_pegasus + energies_zephyr,
         "System": [pegasus_qpu_name] * len(energies_pegasus) + [zephyr_qpu_name] * len(energies_zephyr)
     })
 
-    fig = px.histogram(df, x="Energy", color="System", nbins=int(len(energies_pegasus)/10))
+    fig = px.histogram(df, x="Energy", color="System", nbins=50, barmode="overlay")
     fig.update_layout(yaxis_title="Number of reads")
 
     return fig

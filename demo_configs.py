@@ -35,4 +35,4 @@ This demo compares the Advantage2 system to the Advantage by finding a Zephyr-Pe
 DEFAULT_ADVANTAGE2 = "Advantage2_system1.1"
 DEFAULT_ADVANTAGE = "Advantage_system4.1"
 
-PRECISION = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024]
+PRECISION_OPTIONS = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024]

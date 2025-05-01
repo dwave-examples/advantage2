@@ -22,7 +22,7 @@ from demo_configs import (
     DEFAULT_ADVANTAGE2,
     DESCRIPTION,
     MAIN_HEADER,
-    PRECISION,
+    PRECISION_OPTIONS,
     THEME_COLOR_SECONDARY,
     THUMBNAIL,
 )
@@ -39,7 +39,6 @@ try:
             "fast": qpu.properties["fast_anneal_time_range"],
             "standard": qpu.properties["annealing_time_range"],
         }
-    print(ANNEAL_TIME_RANGES)
 
     qpus = [
         qpu.name for qpu in client.get_solvers()
@@ -90,6 +89,7 @@ def dropdown(label: str, id: str, options: list, value=None) -> html.Div:
         label: The title that goes above the dropdown.
         id: A unique selector for this element.
         options: A list of dictionaries of labels and values.
+        value: Optional default value.
     """
     return html.Div(
         className="dropdown-wrapper",
@@ -131,9 +131,12 @@ def radio(label: str, id: str, options: list, value: int, inline: bool = True) -
     )
 
 
-def generate_options(types) -> list[dict]:
+def generate_options(options) -> list[dict]:
     """Generates options for dropdowns, checklists, radios, etc."""
-    return [{"label": type.label, "value": type.value} for type in types]
+    if isinstance(options, list):
+        return [{"label": option, "value": option} for option in options]
+
+    return [{"label": option.label, "value": option.value} for option in options]
 
 
 def generate_settings_form() -> html.Div:
@@ -144,9 +147,9 @@ def generate_settings_form() -> html.Div:
     """
     radio_options_anneal = generate_options(AnnealType)
     radio_options_scheme = generate_options(SchemeType)
-    advantage_options = [{"label": qpu_name, "value": qpu_name} for qpu_name in advantage_solvers]
-    advantage2_options = [{"label": qpu_name, "value": qpu_name} for qpu_name in advantage2_solvers]
-    precision = [{"label": option, "value": option} for option in PRECISION]
+    advantage_options = generate_options(advantage_solvers)
+    advantage2_options = generate_options(advantage2_solvers)
+    precision_options = generate_options(PRECISION_OPTIONS)
 
     advantage = DEFAULT_ADVANTAGE if DEFAULT_ADVANTAGE in advantage_solvers else advantage_solvers[0]
     advantage2 = DEFAULT_ADVANTAGE2 if DEFAULT_ADVANTAGE2 in advantage2_solvers else advantage2_solvers[0]
@@ -189,7 +192,7 @@ def generate_settings_form() -> html.Div:
             dropdown(
                 "Precision",
                 "precision-setting",
-                precision,
+                precision_options,
             ),
             html.Label("Random Seed (optional)"),
             dcc.Input(
