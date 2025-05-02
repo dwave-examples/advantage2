@@ -23,6 +23,7 @@ from dash import MATCH
 from dash.dependencies import Input, Output, State
 from dwave.system import DWaveSampler
 import plotly.graph_objects as go
+from dash.exceptions import PreventUpdate
 
 
 from demo_interface import ANNEAL_TIME_RANGES, generate_problem_details_table_rows
@@ -71,18 +72,21 @@ def render_initial_state(
     advantage_system: str,
     advantage2_system: str
 ) -> tuple[go.Figure, go.Figure, str, str]:
-    """Update graphs when the selected Advantage and Advantage2 systems change
+    """Update graphs when the selected Advantage or Advantage2 systems change.
 
     Args:
         advantage2_system: The name of the Advantage2 system selected.
         advantage_system: The name of the Advantage system selected.
 
     Returns:
-        graph: Advantage graph.
-        graph2: Advantage2 graph.
-        intersection_graph: The intersection graph.
-        best_mapping: The mapping of the chimera graph onto each system (Advantage and Advantage2)
+        graph: The Advantage graph with highlighted intersection graph.
+        graph2: The Advantage2 graph with highlighted intersection graph.
+        intersection_graph: The intersection chimera graph.
+        best_mapping: The mapping of the chimera intersection graph onto each system
+            (Advantage and Advantage2).
     """
+    if not advantage_system or not advantage2_system or not "Advantage" in advantage_system.split("_")[0]:
+        raise PreventUpdate
 
     graph, graph2, intersection_graph, best_mapping = get_chip_intersection_graph(
         advantage_system, advantage2_system
@@ -117,6 +121,9 @@ def update_anneal_time(
         annealing-time-setting-max: Max value for annealing time setting.
         anneal-time-help: Annealing time help text.
     """
+    if not advantage_system or not advantage2_system or not "Advantage" in advantage_system.split("_")[0]:
+        raise PreventUpdate
+
     anneal_type = "standard" if anneal_type is AnnealType.STANDARD.value else "fast"
     min_anneal = max(ANNEAL_TIME_RANGES[advantage_system][anneal_type][0], ANNEAL_TIME_RANGES[advantage2_system][anneal_type][0])
     max_anneal = min(ANNEAL_TIME_RANGES[advantage_system][anneal_type][1], ANNEAL_TIME_RANGES[advantage2_system][anneal_type][1])
@@ -188,10 +195,11 @@ def run_optimization(
         anneal_type: The AnnealType, either 0: STANDARD or 1: FAST.
         anneal_time: The anneal time in microseconds.
         scheme_type: The SchemeType, either 0: UNIFORM or 1: POWER_LAW.
-        precision: The precision for the problem
+        precision: The precision for the problem.
         random_seed: The random seed for the generator.
         intersection_graph: The chimera intersection graph.
-        best_mapping: The mapping of the chimera graph onto each system (Advantage and Advantage2)
+        best_mapping: The mapping of the chimera intersection graph onto each system
+            (Advantage and Advantage2).
 
     Returns:
         A tuple containing all outputs to be used when updating the HTML

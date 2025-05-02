@@ -29,13 +29,14 @@ from demo_configs import (
 from src.demo_enums import AnnealType, SchemeType
 from dwave.cloud import Client
 
+ANNEAL_TIME_RANGES = {}
 
-# Initialize: available QPUs, initial progress-bar status
+# Initialize: available QPUs
 try:
     client = Client.from_config(client="qpu")
-    ANNEAL_TIME_RANGES = {}
+
     for qpu in client.get_solvers():
-        ANNEAL_TIME_RANGES[qpu.name] ={
+        ANNEAL_TIME_RANGES[qpu.name] = {
             "fast": qpu.properties["fast_anneal_time_range"],
             "standard": qpu.properties["annealing_time_range"],
         }
@@ -43,14 +44,17 @@ try:
     qpus = [
         qpu.name for qpu in client.get_solvers()
     ]
-    if len(qpus) < 1:
+    advantage_solvers = [solver for solver in qpus if solver.split("_")[0] == "Advantage"]
+    advantage2_solvers = [solver for solver in qpus if solver.split("_")[0] == "Advantage2"]
+
+    if not len(advantage_solvers) or not len(advantage2_solvers):
         raise Exception
 
 except Exception:
-    qpus = {}
+    advantage_solvers = ["No Leap Access"]
+    advantage2_solvers = ["No Leap Access"]
 
-advantage_solvers = [solver for solver in qpus if solver.split("_")[0] == "Advantage"]
-advantage2_solvers = [solver for solver in qpus if solver.split("_")[0] == "Advantage2"]
+
 
 
 def slider(label: str, id: str, config: dict) -> html.Div:
@@ -154,6 +158,15 @@ def generate_settings_form() -> html.Div:
     advantage = DEFAULT_ADVANTAGE if DEFAULT_ADVANTAGE in advantage_solvers else advantage_solvers[0]
     advantage2 = DEFAULT_ADVANTAGE2 if DEFAULT_ADVANTAGE2 in advantage2_solvers else advantage2_solvers[0]
 
+    min_anneal = max_anneal = 0
+    if advantage.split("_")[0] == "Advantage" and advantage2.split("_")[0] == "Advantage2":
+        min_anneal = max(
+            ANNEAL_TIME_RANGES[advantage]["standard"][0], ANNEAL_TIME_RANGES[advantage2]["standard"][0]
+        )
+        max_anneal = min(
+            ANNEAL_TIME_RANGES[advantage]["standard"][1], ANNEAL_TIME_RANGES[advantage2]["standard"][1]
+        )
+
     return html.Div(
         className="settings",
         children=[
@@ -179,8 +192,8 @@ def generate_settings_form() -> html.Div:
             dcc.Input(
                 id="annealing-time-setting",
                 type="number",
-                min=max(ANNEAL_TIME_RANGES[advantage]["standard"][0], ANNEAL_TIME_RANGES[advantage2]["standard"][0]),
-                max=min(ANNEAL_TIME_RANGES[advantage]["standard"][1], ANNEAL_TIME_RANGES[advantage2]["standard"][1]),
+                min=min_anneal,
+                max=max_anneal,
             ),
             html.P(id="anneal-time-help"),
             radio(
