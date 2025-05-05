@@ -36,3 +36,4 @@ DEFAULT_ADVANTAGE2 = "Advantage2_system1.1"
 DEFAULT_ADVANTAGE = "Advantage_system4.1"
 
 PRECISION_OPTIONS = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024]
+PRECISION_DEFAULT = 128  # must be included in the list above

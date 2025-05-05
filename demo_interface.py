@@ -22,6 +22,7 @@ from demo_configs import (
     DEFAULT_ADVANTAGE2,
     DESCRIPTION,
     MAIN_HEADER,
+    PRECISION_DEFAULT,
     PRECISION_OPTIONS,
     THEME_COLOR_SECONDARY,
     THUMBNAIL,
@@ -51,10 +52,7 @@ try:
         raise Exception
 
 except Exception:
-    advantage_solvers = ["No Leap Access"]
-    advantage2_solvers = ["No Leap Access"]
-
-
+    advantage_solvers = advantage2_solvers = ["No Leap Access"]
 
 
 def slider(label: str, id: str, config: dict) -> html.Div:
@@ -194,6 +192,7 @@ def generate_settings_form() -> html.Div:
                 type="number",
                 min=min_anneal,
                 max=max_anneal,
+                value=500,
             ),
             html.P(id="anneal-time-help"),
             radio(
@@ -206,6 +205,7 @@ def generate_settings_form() -> html.Div:
                 "Precision",
                 "precision-setting",
                 precision_options,
+                value=PRECISION_DEFAULT,
             ),
             html.Label("Random Seed (optional)"),
             dcc.Input(
@@ -420,6 +420,7 @@ def create_interface():
                                                                 ),
                                                                 className="graph",
                                                             ),
+                                                            className="graph-wrapper",
                                                         ),
                                                     ),
                                                     # Problem details dropdown

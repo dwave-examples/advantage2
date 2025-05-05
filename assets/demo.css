@@ -45,13 +45,21 @@ custom CSS can be added below.
 }
 
 .graph-wrapper {
-    display: flex;
     margin-top: 3rem;
+}
+
+.input .graph-wrapper {
+    display: flex;
 }
 
 .input .graph {
     width: calc(48vw - var(--left-col-width)/2);
-    height: calc((50vw - var(--left-col-width)/2));
+    height: calc(100vh - var(--banner-height) - 200px);
+}
+
+.input .dash-graph {
+    position: relative;
+    height: inherit;
 }
 
 .graph-wrapper > div {

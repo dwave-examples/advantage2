@@ -1,5 +1,5 @@
 from collections.abc import Mapping
-from demo_configs import THEME_COLOR_SECONDARY
+from demo_configs import THEME_COLOR, THEME_COLOR_SECONDARY
 from src.demo_enums import AnnealType
 import networkx as nx
 import dwave_networkx as dnx
@@ -104,7 +104,7 @@ def get_fig(G: nx.Graph, subG: nx.Graph, node_coords: dict[int, tuple], title: s
     fig = go.Figure(
         data=[edge_trace, node_trace, edge_trace_sub, node_trace_sub],
         layout=go.Layout(
-            title=dict(text=title, font=dict(size=16)),
+            title=dict(text=title, font=dict(size=20, color=THEME_COLOR)),
             showlegend=False,
             hovermode='closest',
             margin=dict(b=20,l=0,r=0,t=40),
@@ -183,8 +183,8 @@ def get_chip_intersection_graph(
     pegasus_pos = dnx.drawing.pegasus_layout(dnx.pegasus_graph(16), crosses=True)
     zephyr_pos = dnx.drawing.zephyr_layout(dnx.zephyr_graph(12))
     
-    fig = get_fig(pegasus_qpu_g, sub, pegasus_pos, "Advantage")
-    fig2 = get_fig(zephyr_qpu_g, sub2, zephyr_pos, "Advantage2")
+    fig = get_fig(pegasus_qpu_g, sub, pegasus_pos, pegasus_qpu_name)
+    fig2 = get_fig(zephyr_qpu_g, sub2, zephyr_pos, zephyr_qpu_name)
 
     return fig, fig2, intersection_graph, best_mapping
 
