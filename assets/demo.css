@@ -74,3 +74,14 @@ custom CSS can be added below.
 #annealing-time-setting.error {
     outline: solid red;
 }
+
+h6 {
+    margin-top: 2rem;
+    border-bottom: 2px solid var(--theme);
+    font-size: 1.6rem;
+    font-weight: 500;
+}
+
+label {
+    margin-top: 1rem;
+}

@@ -168,18 +168,38 @@ def generate_settings_form() -> html.Div:
     return html.Div(
         className="settings",
         children=[
+            html.H6("Comparison Systems"),
             dropdown(
-                "Advantage2 System",
+                "Advantage2",
                 "advantage2-setting",
                 sorted(advantage2_options, key=lambda op: op["value"]),
                 value=advantage2,
             ),
             dropdown(
-                "Advantage Comparison System",
+                "Advantage",
                 "advantage-setting",
                 sorted(advantage_options, key=lambda op: op["value"]),
                 value=advantage,
             ),
+            html.H6("Optimization Problem"),
+            radio(
+                "Weight Distribution",
+                "scheme-type-setting",
+                sorted(radio_options_scheme, key=lambda op: op["value"]),
+                1,
+            ),
+            dropdown(
+                "Weight Precision",
+                "precision-setting",
+                precision_options,
+                value=PRECISION_DEFAULT,
+            ),
+            html.Label("Weight Random Seed (optional)"),
+            dcc.Input(
+                id="random-seed-setting",
+                type="number",
+            ),
+            html.H6("Annealing Protocol"),
             radio(
                 "Anneal Type",
                 "anneal-type-setting",
@@ -195,23 +215,6 @@ def generate_settings_form() -> html.Div:
                 value=500,
             ),
             html.P(id="anneal-time-help"),
-            radio(
-                "Scheme",
-                "scheme-type-setting",
-                sorted(radio_options_scheme, key=lambda op: op["value"]),
-                0,
-            ),
-            dropdown(
-                "Precision",
-                "precision-setting",
-                precision_options,
-                value=PRECISION_DEFAULT,
-            ),
-            html.Label("Random Seed (optional)"),
-            dcc.Input(
-                id="random-seed-setting",
-                type="number",
-            ),
         ],
     )
 
@@ -221,10 +224,10 @@ def generate_run_buttons() -> html.Div:
     return html.Div(
         id="button-group",
         children=[
-            html.Button(id="run-button", children="Run Optimization", n_clicks=0, disabled=False),
+            html.Button(id="run-button", children="Run Job", n_clicks=0, disabled=False),
             html.Button(
                 id="cancel-button",
-                children="Cancel Optimization",
+                children="Cancel Job",
                 n_clicks=0,
                 className="display-none",
             ),
