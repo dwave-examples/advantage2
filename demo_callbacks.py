@@ -220,7 +220,7 @@ def run_optimization(
     pegasus_qpu = DWaveSampler(solver=advantage_system)
     zephyr_qpu = DWaveSampler(solver=advantage2_system)
 
-    energies_pegasus = get_energies(
+    energies_pegasus, info_pegasus = get_energies(
         pegasus_qpu,
         intersection_graph,
         best_mapping[advantage_system],
@@ -228,7 +228,7 @@ def run_optimization(
         anneal_type,
         bqm
     )
-    energies_zephyr = get_energies(
+    energies_zephyr, info_zephyr = get_energies(
         zephyr_qpu,
         intersection_graph,
         best_mapping[advantage2_system],
