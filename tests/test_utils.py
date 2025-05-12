@@ -18,7 +18,6 @@ import pytest
 from src.demo_enums import AnnealType
 from src.utils import get_chip_intersection_graph, get_edge_trace, get_energies, get_fig, get_mapping, get_node_trace, plot_solution
 import plotly.graph_objects as go
-from typing import Callable
 import unittest.mock as mock
 
 
@@ -57,18 +56,19 @@ def test_get_fig():
     assert fig.layout.title.text == "Test Graph"
 
 
-def dummy_mapper(intersection_graph: nx.Graph, qpu_g: nx.Graph) -> list[Callable]:
-    def map1(node): return f"mapped_{node}"
-    def map2(node): return f"another_mapped_{node}"
-
-    return [map2, map1]
-
 def test_get_mapping():
+    # Create dummy mapper to pass into get_mapping function
+    def dummy_mapper(intersection_graph, qpu_g):
+        def map1(node): return f"mapped_{node}"
+        def map2(node): return f"another_mapped_{node}"
+
+        return [map2, map1]
+
     # Create intersection graph
     intersection_graph = nx.Graph()
     intersection_graph.add_edges_from([(0, 1), (1, 2)])
 
-    # Create a QPU graph
+    # Create QPU graph
     qpu_graph = nx.Graph()
     qpu_graph.add_edges_from([
         ("mapped_0", "mapped_1"),
@@ -90,16 +90,10 @@ def test_get_mapping():
 @mock.patch("src.utils.get_mapping")
 @mock.patch("src.utils.DWaveSampler")
 @mock.patch("src.utils.dnx")
-def test_get_chip_intersection_graph(
-    mock_dnx,
-    mock_sampler,
-    mock_get_mapping,
-    mock_get_fig,
-):
+def test_get_chip_intersection_graph(mock_dnx, mock_sampler, mock_get_mapping, mock_get_fig):
     # Set up mock samplers and graphs
     mock_pegasus = mock.Mock()
     mock_zephyr = mock.Mock()
-    mock_dnx_response = mock.Mock()
 
     mock_pegasus.properties = {"topology": {"shape": [17]}}  # 17 - 1 = 16
     mock_zephyr.properties = {"topology": {"shape": [8]}}   # 8 * 2 = 16
@@ -124,6 +118,7 @@ def test_get_chip_intersection_graph(
     mock_get_fig.side_effect = [dummy_fig, dummy_fig2]
 
     # Set up mock dnx
+    mock_dnx_response = mock.Mock()
     mock_dnx_response.chimera_graph.return_value = dummy_intersection
     mock_dnx_response.drawing.pegasus_layout.return_value = {}
     mock_dnx_response.drawing.zephyr_layout.return_value = {}
@@ -155,7 +150,6 @@ def test_get_energies():
     graph = nx.complete_graph(5)
     dummy_mapping = lambda x: f"mapped_{x}"
 
-    # Run the function
     energies, info = get_energies(
         qpu=mock_qpu,
         graph=graph,
