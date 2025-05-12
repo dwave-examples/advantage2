@@ -235,23 +235,28 @@ def generate_run_buttons() -> html.Div:
     )
 
 
-def generate_problem_details_table_rows(solver: str, time_limit: int) -> list[html.Tr]:
-    """Generates table rows for the problem details table.
+def generate_problem_details_table(info: dict[str, dict]) -> list[html.Thead, html.Tbody]:
+    """Generates table for the problem details table.
 
     Args:
-        solver: The solver used for optimization.
-        time_limit: The solver time limit.
+        info: Dictionary of system keys and timing details dictionaries.
 
     Returns:
-        list[html.Tr]: List of rows for the problem details table.
+        list[html.Thead, html.Tbody]: The table header and body for the problem details table.
     """
+    table_rows = [[key, *list(timing.values())] for key, timing in info.items()]
 
-    table_rows = (
-        ("Solver:", solver, "Time Limit:", f"{time_limit}s"),
-        ### Add more table rows here. Each tuple is a row in the table.
-    )
+    table_headers = ["System"]
+    for time_key in info[table_rows[0][0]].keys():
+        time_key = [t.capitalize() for t in time_key.split("_")]
+        if time_key[0] == "Qpu":
+            time_key[0] = "QPU"
+        table_headers.append(" ".join(time_key))
 
-    return [html.Tr([html.Td(cell) for cell in row]) for row in table_rows]
+    return [
+        html.Thead([html.Tr([html.Th(header) for header in table_headers])]),
+        html.Tbody([html.Tr([html.Td(cell) for cell in row]) for row in table_rows]),
+    ]
 
 
 def problem_details(index: int) -> html.Div:
@@ -280,30 +285,7 @@ def problem_details(index: int) -> html.Div:
             html.Div(
                 className="details-to-collapse",
                 children=[
-                    html.Table(
-                        className="solution-stats-table",
-                        children=[
-                            # Problem details table header (optional)
-                            html.Thead(
-                                [
-                                    html.Tr(
-                                        [
-                                            html.Th(
-                                                colSpan=2,
-                                                children=["Problem Specifics"],
-                                            ),
-                                            html.Th(
-                                                colSpan=2,
-                                                children=["Run Time"],
-                                            ),
-                                        ]
-                                    )
-                                ]
-                            ),
-                            # A Dash callback function will generate content in Tbody
-                            html.Tbody(id="problem-details"),
-                        ],
-                    ),
+                    html.Table(className="solution-stats-table", id="problem-details"),
                 ],
             ),
         ],

@@ -26,7 +26,7 @@ import plotly.graph_objects as go
 from dash.exceptions import PreventUpdate
 
 
-from demo_interface import ANNEAL_TIME_RANGES, generate_problem_details_table_rows
+from demo_interface import ANNEAL_TIME_RANGES, generate_problem_details_table
 from src.demo_enums import AnnealType, SchemeType
 from src.utils import deserialize, get_chip_intersection_graph, get_energies, plot_solution, serialize
 
@@ -240,9 +240,8 @@ def run_optimization(
     fig = plot_solution(advantage_system, advantage2_system, energies_pegasus, energies_zephyr)
 
     # Generates a list of table rows for the problem details table.
-    problem_details_table = generate_problem_details_table_rows(
-        solver=advantage_system,
-        time_limit=0,
+    problem_details_table = generate_problem_details_table(
+        {advantage2_system: info_zephyr["timing"], advantage_system: info_pegasus["timing"]}
     )
 
     return fig, problem_details_table
