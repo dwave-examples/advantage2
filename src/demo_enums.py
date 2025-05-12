@@ -14,6 +14,7 @@
 
 from enum import Enum
 
+
 class AnnealType(Enum):
     """Add a list of solver options here. If this demo only requires 1 solver,
     this functionality can be removed.
@@ -29,6 +30,7 @@ class AnnealType(Enum):
             AnnealType.FAST: "Fast Anneal",
         }[self]
 
+
 class SchemeType(Enum):
     """Add a list of solver options here. If this demo only requires 1 solver,
     this functionality can be removed.
@@ -43,4 +45,3 @@ class SchemeType(Enum):
             SchemeType.UNIFORM: "Uniform",
             SchemeType.POWER_LAW: "Power Law",
         }[self]
-

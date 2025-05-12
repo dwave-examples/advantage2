@@ -15,20 +15,25 @@
 from __future__ import annotations
 
 from typing import Union
-import networkx as nx
 
-import dimod
 import dash
+import dimod
+import networkx as nx
+import plotly.graph_objects as go
 from dash import MATCH
 from dash.dependencies import Input, Output, State
-from dwave.system import DWaveSampler
-import plotly.graph_objects as go
 from dash.exceptions import PreventUpdate
-
+from dwave.system import DWaveSampler
 
 from demo_interface import ANNEAL_TIME_RANGES, generate_problem_details_table
 from src.demo_enums import AnnealType, SchemeType
-from src.utils import deserialize, get_chip_intersection_graph, get_energies, plot_solution, serialize
+from src.utils import (
+    deserialize,
+    get_chip_intersection_graph,
+    get_energies,
+    plot_solution,
+    serialize,
+)
 
 
 @dash.callback(
@@ -69,8 +74,7 @@ def toggle_left_column(collapse_trigger: int, to_collapse_class: str) -> str:
     ],
 )
 def render_initial_state(
-    advantage_system: str,
-    advantage2_system: str
+    advantage_system: str, advantage2_system: str
 ) -> tuple[go.Figure, go.Figure, str, str]:
     """Update graphs when the selected Advantage or Advantage2 systems change.
 
@@ -85,7 +89,11 @@ def render_initial_state(
         best_mapping: The mapping of the chimera intersection graph onto each system
             (Advantage and Advantage2).
     """
-    if not advantage_system or not advantage2_system or not "Advantage" in advantage_system.split("_")[0]:
+    if (
+        not advantage_system
+        or not advantage2_system
+        or not "Advantage" in advantage_system.split("_")[0]
+    ):
         raise PreventUpdate
 
     graph, graph2, intersection_graph, best_mapping = get_chip_intersection_graph(
@@ -121,18 +129,25 @@ def update_anneal_time(
         annealing-time-setting-max: Max value for annealing time setting.
         anneal-time-help: Annealing time help text.
     """
-    if not advantage_system or not advantage2_system or not "Advantage" in advantage_system.split("_")[0]:
+    if (
+        not advantage_system
+        or not advantage2_system
+        or not "Advantage" in advantage_system.split("_")[0]
+    ):
         raise PreventUpdate
 
     anneal_type = "standard" if anneal_type is AnnealType.STANDARD.value else "fast"
-    min_anneal = max(ANNEAL_TIME_RANGES[advantage_system][anneal_type][0], ANNEAL_TIME_RANGES[advantage2_system][anneal_type][0])
-    max_anneal = min(ANNEAL_TIME_RANGES[advantage_system][anneal_type][1], ANNEAL_TIME_RANGES[advantage2_system][anneal_type][1])
-
-    return (
-        min_anneal,
-        max_anneal,
-        f"Must be between {min_anneal} and {max_anneal}"
+    min_anneal = max(
+        ANNEAL_TIME_RANGES[advantage_system][anneal_type][0],
+        ANNEAL_TIME_RANGES[advantage2_system][anneal_type][0],
     )
+    max_anneal = min(
+        ANNEAL_TIME_RANGES[advantage_system][anneal_type][1],
+        ANNEAL_TIME_RANGES[advantage2_system][anneal_type][1],
+    )
+
+    return (min_anneal, max_anneal, f"Must be between {min_anneal} and {max_anneal}")
+
 
 @dash.callback(
     Output("run-button", "disabled"),
@@ -211,7 +226,9 @@ def run_optimization(
     scheme_type = SchemeType(scheme_type)
     anneal_type = AnnealType(anneal_type)
 
-    generator = dimod.generators.ran_r if scheme_type is SchemeType.UNIFORM else dimod.generators.power_r
+    generator = (
+        dimod.generators.ran_r if scheme_type is SchemeType.UNIFORM else dimod.generators.power_r
+    )
     intersection_graph = deserialize(intersection_graph)
     best_mapping = deserialize(best_mapping)
 
@@ -226,7 +243,7 @@ def run_optimization(
         best_mapping[advantage_system],
         anneal_time,
         anneal_type,
-        bqm
+        bqm,
     )
     energies_zephyr, info_zephyr = get_energies(
         zephyr_qpu,
@@ -234,7 +251,7 @@ def run_optimization(
         best_mapping[advantage2_system],
         anneal_time,
         anneal_type,
-        bqm
+        bqm,
     )
 
     fig = plot_solution(advantage_system, advantage2_system, energies_pegasus, energies_zephyr)

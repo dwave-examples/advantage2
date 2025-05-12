@@ -16,6 +16,7 @@
 from __future__ import annotations
 
 from dash import dcc, html
+from dwave.cloud import Client
 
 from demo_configs import (
     DEFAULT_ADVANTAGE,
@@ -28,7 +29,6 @@ from demo_configs import (
     THUMBNAIL,
 )
 from src.demo_enums import AnnealType, SchemeType
-from dwave.cloud import Client
 
 ANNEAL_TIME_RANGES = {}
 
@@ -42,9 +42,7 @@ try:
             "standard": qpu.properties["annealing_time_range"],
         }
 
-    qpus = [
-        qpu.name for qpu in client.get_solvers()
-    ]
+    qpus = [qpu.name for qpu in client.get_solvers()]
     advantage_solvers = [solver for solver in qpus if solver.split("_")[0] == "Advantage"]
     advantage2_solvers = [solver for solver in qpus if solver.split("_")[0] == "Advantage2"]
 
@@ -153,16 +151,22 @@ def generate_settings_form() -> html.Div:
     advantage2_options = generate_options(advantage2_solvers)
     precision_options = generate_options(PRECISION_OPTIONS)
 
-    advantage = DEFAULT_ADVANTAGE if DEFAULT_ADVANTAGE in advantage_solvers else advantage_solvers[0]
-    advantage2 = DEFAULT_ADVANTAGE2 if DEFAULT_ADVANTAGE2 in advantage2_solvers else advantage2_solvers[0]
+    advantage = (
+        DEFAULT_ADVANTAGE if DEFAULT_ADVANTAGE in advantage_solvers else advantage_solvers[0]
+    )
+    advantage2 = (
+        DEFAULT_ADVANTAGE2 if DEFAULT_ADVANTAGE2 in advantage2_solvers else advantage2_solvers[0]
+    )
 
     min_anneal = max_anneal = 0
     if advantage.split("_")[0] == "Advantage" and advantage2.split("_")[0] == "Advantage2":
         min_anneal = max(
-            ANNEAL_TIME_RANGES[advantage]["standard"][0], ANNEAL_TIME_RANGES[advantage2]["standard"][0]
+            ANNEAL_TIME_RANGES[advantage]["standard"][0],
+            ANNEAL_TIME_RANGES[advantage2]["standard"][0],
         )
         max_anneal = min(
-            ANNEAL_TIME_RANGES[advantage]["standard"][1], ANNEAL_TIME_RANGES[advantage2]["standard"][1]
+            ANNEAL_TIME_RANGES[advantage]["standard"][1],
+            ANNEAL_TIME_RANGES[advantage2]["standard"][1],
         )
 
     return html.Div(
@@ -364,7 +368,9 @@ def create_interface():
                                                                 dcc.Graph(
                                                                     id="advantage-graph",
                                                                     responsive=True,
-                                                                    config={"displayModeBar": False},
+                                                                    config={
+                                                                        "displayModeBar": False
+                                                                    },
                                                                 ),
                                                                 className="graph",
                                                             ),
@@ -372,13 +378,15 @@ def create_interface():
                                                                 dcc.Graph(
                                                                     id="advantage2-graph",
                                                                     responsive=True,
-                                                                    config={"displayModeBar": False},
+                                                                    config={
+                                                                        "displayModeBar": False
+                                                                    },
                                                                 ),
                                                                 className="graph",
                                                             ),
-                                                        ]
+                                                        ],
                                                     ),
-                                                ]
+                                                ],
                                             )
                                         ],
                                     ),
@@ -401,7 +409,9 @@ def create_interface():
                                                                 dcc.Graph(
                                                                     id="results-graph",
                                                                     responsive=True,
-                                                                    config={"displayModeBar": False},
+                                                                    config={
+                                                                        "displayModeBar": False
+                                                                    },
                                                                 ),
                                                                 className="graph",
                                                             ),

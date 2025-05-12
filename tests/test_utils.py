@@ -12,14 +12,21 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import networkx as nx
-import pytest
-
-from src.demo_enums import AnnealType
-from src.utils import get_chip_intersection_graph, get_edge_trace, get_energies, get_fig, get_mapping, get_node_trace, plot_solution
-import plotly.graph_objects as go
 import unittest.mock as mock
 
+import networkx as nx
+import plotly.graph_objects as go
+
+from src.demo_enums import AnnealType
+from src.utils import (
+    get_chip_intersection_graph,
+    get_edge_trace,
+    get_energies,
+    get_fig,
+    get_mapping,
+    get_node_trace,
+    plot_solution,
+)
 
 node_coords = {1: (0, 0), 2: (1, 1), 3: (2, 0)}
 
@@ -31,7 +38,7 @@ def test_get_edge_trace():
     trace = get_edge_trace(G, node_coords, "white", 2.0)
 
     assert isinstance(trace, go.Scatter)
-    assert trace.mode == 'lines'
+    assert trace.mode == "lines"
 
 
 def test_get_node_trace():
@@ -41,7 +48,7 @@ def test_get_node_trace():
     trace = get_node_trace(G, node_coords, "white")
 
     assert isinstance(trace, go.Scatter)
-    assert trace.mode == 'markers'
+    assert trace.mode == "markers"
     assert len(trace.x) == 3
 
 
@@ -59,8 +66,11 @@ def test_get_fig():
 def test_get_mapping():
     # Create dummy mapper to pass into get_mapping function
     def dummy_mapper(intersection_graph, qpu_g):
-        def map1(node): return f"mapped_{node}"
-        def map2(node): return f"another_mapped_{node}"
+        def map1(node):
+            return f"mapped_{node}"
+
+        def map2(node):
+            return f"another_mapped_{node}"
 
         return [map2, map1]
 
@@ -70,12 +80,16 @@ def test_get_mapping():
 
     # Create QPU graph
     qpu_graph = nx.Graph()
-    qpu_graph.add_edges_from([
-        ("mapped_0", "mapped_1"),
-        ("mapped_1", "mapped_2"),
-    ])
+    qpu_graph.add_edges_from(
+        [
+            ("mapped_0", "mapped_1"),
+            ("mapped_1", "mapped_2"),
+        ]
+    )
 
-    sub_graph, intersection_graph, mapping = get_mapping(qpu_graph, intersection_graph, dummy_mapper)
+    sub_graph, intersection_graph, mapping = get_mapping(
+        qpu_graph, intersection_graph, dummy_mapper
+    )
 
     assert mapping(0) == "mapped_0"
     assert mapping(1) == "mapped_1"
@@ -96,7 +110,7 @@ def test_get_chip_intersection_graph(mock_dnx, mock_sampler, mock_get_mapping, m
     mock_zephyr = mock.Mock()
 
     mock_pegasus.properties = {"topology": {"shape": [17]}}  # 17 - 1 = 16
-    mock_zephyr.properties = {"topology": {"shape": [8]}}   # 8 * 2 = 16
+    mock_zephyr.properties = {"topology": {"shape": [8]}}  # 8 * 2 = 16
 
     mock_pegasus.to_networkx_graph.return_value = nx.complete_graph(5)
     mock_zephyr.to_networkx_graph.return_value = nx.complete_graph(5)
@@ -109,7 +123,7 @@ def test_get_chip_intersection_graph(mock_dnx, mock_sampler, mock_get_mapping, m
     dummy_mapping = lambda x: f"mapped_{x}"
     mock_get_mapping.side_effect = [
         (dummy_subgraph, dummy_intersection, dummy_mapping),
-        (dummy_subgraph, dummy_intersection, dummy_mapping)
+        (dummy_subgraph, dummy_intersection, dummy_mapping),
     ]
 
     # Set up mock figs
@@ -124,12 +138,14 @@ def test_get_chip_intersection_graph(mock_dnx, mock_sampler, mock_get_mapping, m
     mock_dnx_response.drawing.zephyr_layout.return_value = {}
     mock_dnx.return_value = mock_dnx_response
 
-    fig, fig2, intersection_graph, mapping_dict = get_chip_intersection_graph("Advantage", "Advantage2")
+    fig, fig2, intersection_graph, mapping_dict = get_chip_intersection_graph(
+        "Advantage", "Advantage2"
+    )
 
     assert fig is dummy_fig
     assert fig2 is dummy_fig2
     assert isinstance(intersection_graph, nx.Graph)
-    assert mapping_dict  == {"Advantage": dummy_mapping, "Advantage2": dummy_mapping}
+    assert mapping_dict == {"Advantage": dummy_mapping, "Advantage2": dummy_mapping}
 
 
 def test_get_energies():

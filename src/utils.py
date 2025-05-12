@@ -1,16 +1,19 @@
+import base64
 from collections.abc import Mapping
+from typing import Any, Callable
+
+import dill as pickle
+import dwave_networkx as dnx
+import networkx as nx
+import pandas as pd
+import plotly.express as px
+import plotly.graph_objects as go
+from dimod import BinaryQuadraticModel
+from dwave.system import DWaveSampler
+
 from demo_configs import THEME_COLOR, THEME_COLOR_SECONDARY
 from src.demo_enums import AnnealType
-import networkx as nx
-import dwave_networkx as dnx
-from dwave.system import DWaveSampler
-import plotly.graph_objects as go
-import plotly.express as px
-import base64
-from typing import Any, Callable
-import dill as pickle
-import pandas as pd
-from dimod import BinaryQuadraticModel
+
 
 def serialize(obj: Any) -> str:
     """Serialize the object using pickle"""
@@ -23,10 +26,7 @@ def deserialize(obj: str) -> Any:
 
 
 def get_edge_trace(
-    G: nx.Graph,
-    node_coords: dict[int, tuple],
-    color: str,
-    line_width: float
+    G: nx.Graph, node_coords: dict[int, tuple], color: str, line_width: float
 ) -> go.Scatter:
     """Create a Plotly scatter trace of graph edges.
 
@@ -48,10 +48,7 @@ def get_edge_trace(
         edge_y.extend([y0, y1, None])
 
     edge_trace = go.Scatter(
-        x=edge_x, y=edge_y,
-        line=dict(width=line_width, color=color),
-        hoverinfo='none',
-        mode='lines'
+        x=edge_x, y=edge_y, line=dict(width=line_width, color=color), hoverinfo="none", mode="lines"
     )
 
     return edge_trace
@@ -72,13 +69,14 @@ def get_node_trace(G: nx.Graph, node_coords: dict[int, tuple], color: str) -> go
     node_y = [node_coords[node][1] for node in G.nodes()]
 
     node_trace = go.Scatter(
-        x=node_x, y=node_y,
-        mode='markers',
-        hoverinfo='text',
+        x=node_x,
+        y=node_y,
+        mode="markers",
+        hoverinfo="text",
         marker=dict(
             color=color,
             size=3,
-        )
+        ),
     )
 
     return node_trace
@@ -106,13 +104,13 @@ def get_fig(G: nx.Graph, subG: nx.Graph, node_coords: dict[int, tuple], title: s
         layout=go.Layout(
             title=dict(text=title, font=dict(size=20, color=THEME_COLOR)),
             showlegend=False,
-            hovermode='closest',
-            margin=dict(b=20,l=0,r=0,t=40),
+            hovermode="closest",
+            margin=dict(b=20, l=0, r=0, t=40),
             paper_bgcolor="rgba(0, 0, 0, 0)",
             plot_bgcolor="rgba(0, 0, 0, 0)",
             xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-            yaxis=dict(showgrid=False, zeroline=False, showticklabels=False)
-        )
+            yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+        ),
     )
 
     return fig
@@ -144,7 +142,9 @@ def get_mapping(
     mapping = {}
     coupler_yield = 0
     for m in mappings:
-        edges = [edge for edge in intersection_graph.edges if tuple(map(m, edge)) in qpu_graph.edges]
+        edges = [
+            edge for edge in intersection_graph.edges if tuple(map(m, edge)) in qpu_graph.edges
+        ]
         if len(edges) > coupler_yield:
             mapping = m
             coupler_yield = len(edges)
@@ -161,8 +161,7 @@ def get_mapping(
 
 
 def get_chip_intersection_graph(
-    pegasus_qpu_name: str,
-    zephyr_qpu_name: str
+    pegasus_qpu_name: str, zephyr_qpu_name: str
 ) -> tuple[go.Figure, go.Figure, nx.Graph, dict[str, Mapping]]:
     """Find highest-yielding intersection graph between Pegasus/Advantage
     system and Zephyr/Advantage2 system.
@@ -203,11 +202,16 @@ def get_chip_intersection_graph(
 
     pegasus_pos = dnx.drawing.pegasus_layout(dnx.pegasus_graph(16), crosses=True)
     zephyr_pos = dnx.drawing.zephyr_layout(dnx.zephyr_graph(12))
-    
+
     fig = get_fig(pegasus_qpu_g, pegasus_sub_g, pegasus_pos, pegasus_qpu_name)
     fig2 = get_fig(zephyr_qpu_g, zephyr_sub_g, zephyr_pos, zephyr_qpu_name)
 
-    return fig, fig2, intersection_graph, {pegasus_qpu_name: pegasus_mapping, zephyr_qpu_name: zephyr_mapping}
+    return (
+        fig,
+        fig2,
+        intersection_graph,
+        {pegasus_qpu_name: pegasus_mapping, zephyr_qpu_name: zephyr_mapping},
+    )
 
 
 def get_energies(
@@ -234,8 +238,17 @@ def get_energies(
 
     mapping = {node: qpu_mapping(node) for node in graph.nodes()}
     mapped_bqm = bqm.relabel_variables(mapping, inplace=False)
-    sampleset = qpu.sample(mapped_bqm, num_reads=1000, annealing_time=annealing_time, fast_anneal=anneal_type is AnnealType.FAST)
-    energies = [e for e, o in zip(sampleset.record.energy, sampleset.record.num_occurrences) for _ in range(o)]
+    sampleset = qpu.sample(
+        mapped_bqm,
+        num_reads=1000,
+        annealing_time=annealing_time,
+        fast_anneal=anneal_type is AnnealType.FAST,
+    )
+    energies = [
+        e
+        for e, o in zip(sampleset.record.energy, sampleset.record.num_occurrences)
+        for _ in range(o)
+    ]
 
     return energies, sampleset.info
 
@@ -258,10 +271,13 @@ def plot_solution(
         fig: The histogram comparing energies.
     """
 
-    df = pd.DataFrame({
-        "Energy": energies_pegasus + energies_zephyr,
-        "System": [pegasus_qpu_name] * len(energies_pegasus) + [zephyr_qpu_name] * len(energies_zephyr)
-    })
+    df = pd.DataFrame(
+        {
+            "Energy": energies_pegasus + energies_zephyr,
+            "System": [pegasus_qpu_name] * len(energies_pegasus)
+            + [zephyr_qpu_name] * len(energies_zephyr),
+        }
+    )
 
     fig = px.histogram(df, x="Energy", color="System", nbins=50, barmode="overlay")
     fig.update_layout(yaxis_title="Number of reads")
