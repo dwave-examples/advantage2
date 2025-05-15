@@ -89,3 +89,17 @@ label {
 th, td {
     font-size: 1.3rem;
 }
+
+.dash-spinner {
+    position: relative;
+}
+
+.dash-spinner::after {
+    content: "Calculating intersection graph between Advantage2 and Advantage";
+    position: absolute;
+    font-style: italic;
+    text-align: center;
+    width: 30rem;
+    left: -12rem;
+    bottom: -10rem;
+}
