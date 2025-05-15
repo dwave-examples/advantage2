@@ -23,7 +23,7 @@ THEME_COLOR_SECONDARY = "#2A7DE1"  # D-Wave blue default #2A7DE1
 THUMBNAIL = "static/dwave_logo.svg"
 
 APP_TITLE = "Advantage2"
-MAIN_HEADER = "Advantage2"
+MAIN_HEADER = "Advantage2 Performance Comparison"
 DESCRIPTION = """\
 Choose an Advantage and Advantage2 system to view the highest-yielded intersection graph and run
 random spin glass problems on both to compares the energies."""

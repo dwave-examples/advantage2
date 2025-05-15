@@ -1,9 +1,8 @@
-<!-- The following is a README template for your new demo. -->
+# Advantage2 System: Performance Comparison Against Advantage System
 
-# Advantage2
-
-This demonstration compares an Advantage2 system to an Advantage system by finding the
-highest-yielded intersection graph and comparing energies from 1000 samples on each system. The demo
+This demo showcases the improved performance of an Advantage2 system, relative to an Advantage
+system, by generating 1000 random spin glass problem samples on a highest-yielded intersecting
+graph and comparing resulting energies of each system. The demo
 allows for customization of Advantage and Advantage2 systems, annealing protocol, and weight
 distribution and precision.
 
