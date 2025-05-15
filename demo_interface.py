@@ -282,7 +282,7 @@ def problem_details(index: int) -> html.Div:
                 id={"type": "collapse-trigger", "index": index},
                 className="details-collapse",
                 children=[
-                    html.H5("Problem Details"),
+                    html.H5("Solution Details"),
                     html.Div(className="collapse-arrow"),
                 ],
             ),
