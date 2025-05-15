@@ -68,6 +68,7 @@ def toggle_left_column(collapse_trigger: int, to_collapse_class: str) -> str:
     Output("advantage2-graph", "figure"),
     Output("chimera-g", "data"),
     Output("best-mapping", "data"),
+    Output("run-button", "disabled"),
     inputs=[
         Input("advantage-setting", "value"),
         Input("advantage2-setting", "value"),
@@ -75,7 +76,7 @@ def toggle_left_column(collapse_trigger: int, to_collapse_class: str) -> str:
 )
 def render_initial_state(
     advantage_system: str, advantage2_system: str
-) -> tuple[go.Figure, go.Figure, str, str]:
+) -> tuple[go.Figure, go.Figure, str, str, bool]:
     """Update graphs when the selected Advantage or Advantage2 systems change.
 
     Args:
@@ -88,6 +89,7 @@ def render_initial_state(
         intersection_graph: The intersection chimera graph.
         best_mapping: The mapping of the chimera intersection graph onto each system
             (Advantage and Advantage2).
+        run-button-disabled: Whether to disable the run button.
     """
     if (
         not advantage_system
@@ -99,7 +101,7 @@ def render_initial_state(
     graph, graph2, intersection_graph, best_mapping = get_chip_intersection_graph(
         advantage_system, advantage2_system
     )
-    return graph, graph2, serialize(intersection_graph), serialize(best_mapping)
+    return graph, graph2, serialize(intersection_graph), serialize(best_mapping), False
 
 
 @dash.callback(
@@ -150,8 +152,9 @@ def update_anneal_time(
 
 
 @dash.callback(
-    Output("run-button", "disabled"),
+    Output("run-button", "disabled", allow_duplicate=True),
     Input("annealing-time-setting", "value"),
+    prevent_initial_call=True,
 )
 def validate_anneal_time(anneal_time: int) -> bool:
     """Disable run button if no annealing time."""

@@ -228,7 +228,7 @@ def generate_run_buttons() -> html.Div:
     return html.Div(
         id="button-group",
         children=[
-            html.Button(id="run-button", children="Run Job", n_clicks=0, disabled=False),
+            html.Button(id="run-button", children="Run Job", n_clicks=0, disabled=True),
             html.Button(
                 id="cancel-button",
                 children="Cancel Job",
