@@ -31,6 +31,7 @@ from src.utils import (
     deserialize,
     get_chip_intersection_graph,
     get_energies,
+    open_inspector,
     plot_solution,
     serialize,
 )
@@ -159,8 +160,46 @@ def validate_anneal_time(anneal_time: int) -> bool:
 
 
 @dash.callback(
+    Output("dummy-output", "data"),
+    Input("advantage2-inspector", "n_clicks"),
+    State("sampleset-advantage2", "data"),
+    prevent_initial_call=True,
+)
+def open_inspector_advantage2(
+    advantage2_click: int,
+    sampleset_advantage2,
+):
+    """Open problem in D-Wave Inspector."""
+    sampleset_advantage2 = deserialize(sampleset_advantage2)
+    print(sampleset_advantage2)
+    open_inspector(sampleset_advantage2)
+
+    return ""
+
+
+@dash.callback(
+    Output("dummy-output", "data", allow_duplicate=True),
+    Input("advantage-inspector", "n_clicks"),
+    State("sampleset-advantage", "data"),
+    prevent_initial_call=True,
+)
+def open_inspector_advantage(
+    advantage_click: int,
+    sampleset_advantage,
+):
+    """Open problem in D-Wave Inspector."""
+    sampleset_advantage = deserialize(sampleset_advantage)
+    print(sampleset_advantage)
+    open_inspector(sampleset_advantage)
+
+    return ""
+
+
+@dash.callback(
     Output("results-graph", "figure"),
     Output("problem-details", "children"),
+    Output("sampleset-advantage2", "data"),
+    Output("sampleset-advantage", "data"),
     background=True,
     inputs=[
         Input("run-button", "n_clicks"),
@@ -237,7 +276,7 @@ def run_optimization(
     pegasus_qpu = DWaveSampler(solver=advantage_system)
     zephyr_qpu = DWaveSampler(solver=advantage2_system)
 
-    energies_pegasus, info_pegasus = get_energies(
+    energies_pegasus, sampleset_pegasus = get_energies(
         pegasus_qpu,
         intersection_graph,
         best_mapping[advantage_system],
@@ -245,7 +284,7 @@ def run_optimization(
         anneal_type,
         bqm,
     )
-    energies_zephyr, info_zephyr = get_energies(
+    energies_zephyr, sampleset_zephyr = get_energies(
         zephyr_qpu,
         intersection_graph,
         best_mapping[advantage2_system],
@@ -258,7 +297,10 @@ def run_optimization(
 
     # Generates a list of table rows for the problem details table.
     problem_details_table = generate_problem_details_table(
-        {advantage2_system: info_zephyr["timing"], advantage_system: info_pegasus["timing"]}
+        {
+            advantage2_system: sampleset_zephyr.info["timing"],
+            advantage_system: sampleset_pegasus.info["timing"],
+        }
     )
 
-    return fig, problem_details_table
+    return fig, problem_details_table, serialize(sampleset_zephyr), serialize(sampleset_pegasus)

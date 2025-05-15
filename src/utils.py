@@ -3,6 +3,7 @@ from collections.abc import Mapping
 from typing import Any, Callable
 
 import dill as pickle
+import dwave.inspector  # Necessary import for D-Wave Inspector to work
 import dwave_networkx as dnx
 import networkx as nx
 import pandas as pd
@@ -24,6 +25,9 @@ def deserialize(obj: str) -> Any:
     """Deserialize the object"""
     return pickle.loads(base64.b64decode(obj.encode("utf-8")))
 
+
+def open_inspector(sampleset):
+    dwave.inspector.show(sampleset)
 
 def get_edge_trace(
     G: nx.Graph, node_coords: dict[int, tuple], color: str, line_width: float
@@ -244,13 +248,15 @@ def get_energies(
         annealing_time=annealing_time,
         fast_anneal=anneal_type is AnnealType.FAST,
     )
+    dwave.inspector.show(sampleset)
+
     energies = [
         e
         for e, o in zip(sampleset.record.energy, sampleset.record.num_occurrences)
         for _ in range(o)
     ]
 
-    return energies, sampleset.info
+    return energies, sampleset
 
 
 def plot_solution(

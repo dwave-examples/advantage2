@@ -306,6 +306,9 @@ def create_interface():
             dcc.Store(id="zephyr-qpu"),
             dcc.Store(id="chimera-g"),
             dcc.Store(id="best-mapping"),
+            dcc.Store(id="sampleset-advantage2"),
+            dcc.Store(id="sampleset-advantage"),
+            dcc.Store(id="dummy-output"),
             # Header brand banner
             html.Div(className="banner", children=[html.Img(src=THUMBNAIL)]),
             # Settings and results columns
@@ -418,6 +421,10 @@ def create_interface():
                                                             className="graph-wrapper",
                                                         ),
                                                     ),
+                                                    html.Div([
+                                                        html.Button(id="advantage2-inspector", children="Open Advantage2 in Inspector", n_clicks=0, disabled=False),
+                                                        html.Button(id="advantage-inspector", children="Open Advantage in Inspector", n_clicks=0, disabled=False),
+                                                    ], className="inspector-buttons"),
                                                     # Problem details dropdown
                                                     html.Div([html.Hr(), problem_details(1)]),
                                                 ],
