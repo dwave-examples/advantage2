@@ -16,9 +16,7 @@ from enum import Enum
 
 
 class AnnealType(Enum):
-    """Add a list of solver options here. If this demo only requires 1 solver,
-    this functionality can be removed.
-    """
+    """Options for type of annealing."""
 
     STANDARD = 0
     FAST = 1
@@ -32,9 +30,7 @@ class AnnealType(Enum):
 
 
 class SchemeType(Enum):
-    """Add a list of solver options here. If this demo only requires 1 solver,
-    this functionality can be removed.
-    """
+    """The strategy for choosing weights."""
 
     UNIFORM = 0
     POWER_LAW = 1

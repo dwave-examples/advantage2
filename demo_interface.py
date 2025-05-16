@@ -82,7 +82,7 @@ def slider(label: str, id: str, config: dict) -> html.Div:
     )
 
 
-def dropdown(label: str, id: str, options: list, value=None) -> html.Div:
+def dropdown(label: str, id: str, options: list, value: Optional[Any] = None) -> html.Div:
     """Dropdown element for option selection.
 
     Args:
@@ -131,7 +131,7 @@ def radio(label: str, id: str, options: list, value: int, inline: bool = True) -
     )
 
 
-def generate_options(options) -> list[dict]:
+def generate_options(options: Union[list, Enum]) -> list[dict]:
     """Generates options for dropdowns, checklists, radios, etc."""
     if isinstance(options, list):
         return [{"label": option, "value": option} for option in options]
