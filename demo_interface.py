@@ -401,27 +401,30 @@ def create_interface():
                                             html.Div(
                                                 className="tab-content-results",
                                                 children=[
-                                                    dcc.Loading(
-                                                        parent_className="results",
-                                                        type="circle",
-                                                        color=THEME_COLOR_SECONDARY,
-                                                        # A Dash callback (in app.py) will generate content in the Div below
-                                                        children=html.Div(
-                                                            html.Div(
-                                                                dcc.Graph(
-                                                                    id="results-graph",
-                                                                    responsive=True,
-                                                                    config={
-                                                                        "displayModeBar": False
-                                                                    },
+                                                    html.Div(
+                                                        [
+                                                            dcc.Loading(
+                                                                parent_className="results",
+                                                                type="circle",
+                                                                color=THEME_COLOR_SECONDARY,
+                                                                children=html.Div(
+                                                                    html.Div(
+                                                                        dcc.Graph(
+                                                                            id="results-graph",
+                                                                            responsive=True,
+                                                                            config={
+                                                                                "displayModeBar": False
+                                                                            },
+                                                                        ),
+                                                                        className="graph",
+                                                                    ),
+                                                                    className="graph-wrapper",
                                                                 ),
-                                                                className="graph",
                                                             ),
-                                                            className="graph-wrapper",
-                                                        ),
-                                                    ),
-                                                    # Problem details dropdown
-                                                    html.Div([html.Hr(), problem_details(1)]),
+                                                            # Problem details dropdown
+                                                            html.Div([html.Hr(), problem_details(1)]),
+                                                        ]
+                                                    )
                                                 ],
                                             )
                                         ],

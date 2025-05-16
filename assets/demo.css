@@ -22,18 +22,20 @@ custom CSS can be added below.
 
 .tab-content-results {
     padding: 0 3rem;
+    height: 100%;
+}
+
+.tab-content-results > div {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     height: 100%;
 }
 
-.input {
-    height: initial !important;
-}
-
-.tab-content {
-    display: table;
+.tab-parent {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
 }
 
 .right-column {
@@ -45,10 +47,11 @@ custom CSS can be added below.
 }
 
 .graph-wrapper {
-    margin-top: 3rem;
+    height: 100%;
 }
 
 .input .graph-wrapper {
+    padding-top: 3rem;
     display: flex;
 }
 
@@ -64,6 +67,10 @@ custom CSS can be added below.
 
 .graph-wrapper > div {
     position: relative;
+}
+
+.results {
+    height: 100%;
 }
 
 #anneal-time-help {
