@@ -348,62 +348,23 @@ def create_interface():
                     html.Div(
                         className="right-column",
                         children=[
-                            dbc.Tabs(
-                                children=[
-                                    dbc.Tab(
+                            html.Div(
+                                [
+                                    dbc.Tabs(
                                         children=[
-                                            dcc.Loading(
-                                                parent_className="input",
-                                                type="circle",
-                                                color=THEME_COLOR_SECONDARY,
+                                            dbc.Tab(
                                                 children=[
-                                                    html.Div(
-                                                        className="graph-wrapper",
+                                                    dcc.Loading(
+                                                        parent_className="input",
+                                                        type="circle",
+                                                        color=THEME_COLOR_SECONDARY,
                                                         children=[
                                                             html.Div(
-                                                                dcc.Graph(
-                                                                    id="advantage-graph",
-                                                                    responsive=True,
-                                                                    config={
-                                                                        "displayModeBar": False
-                                                                    },
-                                                                ),
-                                                                className="graph",
-                                                            ),
-                                                            html.Div(
-                                                                dcc.Graph(
-                                                                    id="advantage2-graph",
-                                                                    responsive=True,
-                                                                    config={
-                                                                        "displayModeBar": False
-                                                                    },
-                                                                ),
-                                                                className="graph",
-                                                            ),
-                                                        ],
-                                                    ),
-                                                ],
-                                            )
-                                        ],
-                                        label="Input",
-                                        id="input-tab",
-                                        class_name="tab",
-                                    ),
-                                    dbc.Tab(
-                                        children=[
-                                            html.Div(
-                                                className="tab-content-results",
-                                                children=[
-                                                    html.Div(
-                                                        [
-                                                            dcc.Loading(
-                                                                parent_className="results",
-                                                                type="circle",
-                                                                color=THEME_COLOR_SECONDARY,
-                                                                children=html.Div(
+                                                                className="graph-wrapper",
+                                                                children=[
                                                                     html.Div(
                                                                         dcc.Graph(
-                                                                            id="results-graph",
+                                                                            id="advantage-graph",
                                                                             responsive=True,
                                                                             config={
                                                                                 "displayModeBar": False
@@ -411,23 +372,67 @@ def create_interface():
                                                                         ),
                                                                         className="graph",
                                                                     ),
-                                                                    className="graph-wrapper",
-                                                                ),
+                                                                    html.Div(
+                                                                        dcc.Graph(
+                                                                            id="advantage2-graph",
+                                                                            responsive=True,
+                                                                            config={
+                                                                                "displayModeBar": False
+                                                                            },
+                                                                        ),
+                                                                        className="graph",
+                                                                    ),
+                                                                ],
                                                             ),
-                                                            # Problem details dropdown
-                                                            html.Div([html.Hr(), problem_details(1)]),
-                                                        ]
+                                                        ],
                                                     )
                                                 ],
-                                            )
+                                                label="Input",
+                                                id="input-tab",
+                                                class_name="tab",
+                                            ),
+                                            dbc.Tab(
+                                                children=[
+                                                    html.Div(
+                                                        className="tab-content-results",
+                                                        children=[
+                                                            html.Div(
+                                                                [
+                                                                    dcc.Loading(
+                                                                        parent_className="results",
+                                                                        type="circle",
+                                                                        color=THEME_COLOR_SECONDARY,
+                                                                        children=html.Div(
+                                                                            html.Div(
+                                                                                dcc.Graph(
+                                                                                    id="results-graph",
+                                                                                    responsive=True,
+                                                                                    config={
+                                                                                        "displayModeBar": False
+                                                                                    },
+                                                                                ),
+                                                                                className="graph",
+                                                                            ),
+                                                                            className="graph-wrapper",
+                                                                        ),
+                                                                    ),
+                                                                    # Problem details dropdown
+                                                                    html.Div([html.Hr(), problem_details(1)]),
+                                                                ]
+                                                            )
+                                                        ],
+                                                    )
+                                                ],
+                                                label="Results",
+                                                id="results-tab",
+                                                class_name="tab",
+                                                disabled=True,
+                                            ),
                                         ],
-                                        label="Results",
-                                        id="results-tab",
-                                        class_name="tab",
-                                        disabled=True,
-                                    ),
+                                        id="tabs",
+                                    )
                                 ],
-                                id="tabs",
+                                className="tab-parent"
                             )
                         ],
                     ),
