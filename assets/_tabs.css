@@ -21,10 +21,24 @@ limitations under the License.
     flex-direction: row;
 }
 
+.nav-item {
+    width: calc(100% / 2);
+}
+
 .nav-link {
     margin: 0 2rem;
     border-top-left-radius: 0.6rem;
     border-top-right-radius: 0.6rem;
+    background-color: #f9f9f9;
+    padding: 20px 25px;
+    text-align: center;
+    border-top-left-radius: 0.6rem !important;
+    border-top-right-radius: 0.6rem !important;
+    color: var(--grey-dark);
+}
+
+.nav-link:hover {
+    color: var(--grey-dark);
 }
 
 .nav-link.active {
@@ -36,18 +50,11 @@ limitations under the License.
 
 .nav-link.disabled {
     cursor: not-allowed !important;
+    pointer-events: initial !important;
+    color: #d6d6d6;
 }
 
-.tab:first-child {
-    margin-right: 1rem;
-}
-
-.tab:last-child {
-    margin-left: 1rem;
-}
-
-.tab-content,
-.tab-parent {
+.tab-content {
     height: 100%;
 }
 

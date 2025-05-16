@@ -428,7 +428,6 @@ def create_interface():
                                     ),
                                 ],
                                 id="tabs",
-                                active_tab="input-tab",
                             )
                         ],
                     ),
