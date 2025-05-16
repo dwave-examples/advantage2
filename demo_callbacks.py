@@ -14,15 +14,26 @@
 
 from __future__ import annotations
 
-from typing import NamedTuple, Union
+from typing import Union
 
 import dash
-from dash import MATCH, ctx
+import dimod
+import networkx as nx
+import plotly.graph_objects as go
+from dash import MATCH
 from dash.dependencies import Input, Output, State
 from dash.exceptions import PreventUpdate
+from dwave.system import DWaveSampler
 
-from demo_interface import generate_problem_details_table_rows
-from src.demo_enums import SolverType
+from demo_interface import ANNEAL_TIME_RANGES, generate_problem_details_table
+from src.demo_enums import AnnealType, SchemeType
+from src.utils import (
+    deserialize,
+    get_chip_intersection_graph,
+    get_energies,
+    plot_solution,
+    serialize,
+)
 
 
 @dash.callback(
@@ -53,48 +64,118 @@ def toggle_left_column(collapse_trigger: int, to_collapse_class: str) -> str:
 
 
 @dash.callback(
-    Output("input", "children"),
+    Output("advantage-graph", "figure"),
+    Output("advantage2-graph", "figure"),
+    Output("chimera-g", "data"),
+    Output("best-mapping", "data"),
+    Output("run-button", "disabled"),
     inputs=[
-        Input("slider", "value"),
+        Input("advantage-setting", "value"),
+        Input("advantage2-setting", "value"),
     ],
 )
-def render_initial_state(slider_value: int) -> str:
-    """Runs on load and any time the value of the slider is updated.
-        Add `prevent_initial_call=True` to skip on load runs.
+def render_initial_state(
+    advantage_system: str, advantage2_system: str
+) -> tuple[go.Figure, go.Figure, str, str, bool]:
+    """Update graphs when the selected Advantage or Advantage2 systems change.
 
     Args:
-        slider_value: The value of the slider.
+        advantage2_system: The name of the Advantage2 system selected.
+        advantage_system: The name of the Advantage system selected.
 
     Returns:
-        str: The content of the input tab.
+        graph: The Advantage graph with highlighted intersection graph.
+        graph2: The Advantage2 graph with highlighted intersection graph.
+        intersection_graph: The intersection chimera graph.
+        best_mapping: The mapping of the chimera intersection graph onto each system
+            (Advantage and Advantage2).
+        run-button-disabled: Whether to disable the run button.
     """
-    return f"Put demo input here. The current slider value is {slider_value}."
+    if (
+        not advantage_system
+        or not advantage2_system
+        or not "Advantage" in advantage_system.split("_")[0]
+    ):
+        raise PreventUpdate
 
-
-class RunOptimizationReturn(NamedTuple):
-    """Return type for the ``run_optimization`` callback function."""
-
-    results: str = dash.no_update
-    problem_details_table: list = dash.no_update
-    # Add more return variables here. Return values for callback functions
-    # with many variables should be returned as a NamedTuple for clarity.
+    graph, graph2, intersection_graph, best_mapping = get_chip_intersection_graph(
+        advantage_system, advantage2_system
+    )
+    return graph, graph2, serialize(intersection_graph), serialize(best_mapping), False
 
 
 @dash.callback(
-    # The Outputs below must align with `RunOptimizationReturn`.
-    Output("results", "children"),
+    Output("annealing-time-setting", "min"),
+    Output("annealing-time-setting", "max"),
+    Output("anneal-time-help", "children"),
+    inputs=[
+        Input("advantage-setting", "value"),
+        Input("advantage2-setting", "value"),
+        Input("anneal-type-setting", "value"),
+    ],
+)
+def update_anneal_time(
+    advantage_system: str,
+    advantage2_system: str,
+    anneal_type: str,
+) -> tuple[float, float, str]:
+    """Update annealing time min/max and help text.
+
+    Args:
+        advantage2_system: The name of the Advantage2 system selected.
+        advantage_system: The name of the Advantage system selected.
+        anneal_type: The AnnealType, either 0: STANDARD or 1: FAST.
+
+    Returns:
+        annealing-time-setting-min: Min value for annealing time setting.
+        annealing-time-setting-max: Max value for annealing time setting.
+        anneal-time-help: Annealing time help text.
+    """
+    if (
+        not advantage_system
+        or not advantage2_system
+        or not "Advantage" in advantage_system.split("_")[0]
+    ):
+        raise PreventUpdate
+
+    anneal_type = "standard" if anneal_type is AnnealType.STANDARD.value else "fast"
+    min_anneal = max(
+        ANNEAL_TIME_RANGES[advantage_system][anneal_type][0],
+        ANNEAL_TIME_RANGES[advantage2_system][anneal_type][0],
+    )
+    max_anneal = min(
+        ANNEAL_TIME_RANGES[advantage_system][anneal_type][1],
+        ANNEAL_TIME_RANGES[advantage2_system][anneal_type][1],
+    )
+
+    return (min_anneal, max_anneal, f"Must be between {min_anneal} and {max_anneal}")
+
+
+@dash.callback(
+    Output("run-button", "disabled", allow_duplicate=True),
+    Input("annealing-time-setting", "value"),
+    prevent_initial_call=True,
+)
+def validate_anneal_time(anneal_time: int) -> bool:
+    """Disable run button if no annealing time."""
+    return not anneal_time
+
+
+@dash.callback(
+    Output("results-graph", "figure"),
     Output("problem-details", "children"),
     background=True,
     inputs=[
-        # The first string in the Input/State elements below must match an id in demo_interface.py
-        # Remove or alter the following id's to match any changes made to demo_interface.py
         Input("run-button", "n_clicks"),
-        State("solver-type-select", "value"),
-        State("solver-time-limit", "value"),
-        State("slider", "value"),
-        State("dropdown", "value"),
-        State("checklist", "value"),
-        State("radio", "value"),
+        State("advantage2-setting", "value"),
+        State("advantage-setting", "value"),
+        State("anneal-type-setting", "value"),
+        State("annealing-time-setting", "value"),
+        State("scheme-type-setting", "value"),
+        State("precision-setting", "value"),
+        State("random-seed-setting", "value"),
+        State("chimera-g", "data"),
+        State("best-mapping", "data"),
     ],
     running=[
         (Output("cancel-button", "className"), "", "display-none"),  # Show/hide cancel button.
@@ -102,22 +183,22 @@ class RunOptimizationReturn(NamedTuple):
         (Output("results-tab", "disabled"), True, False),  # Disables results tab while running.
         (Output("results-tab", "label"), "Loading...", "Results"),
         (Output("tabs", "value"), "input-tab", "input-tab"),  # Switch to input tab while running.
-        (Output("run-in-progress", "data"), True, False),  # Can block certain callbacks.
     ],
     cancel=[Input("cancel-button", "n_clicks")],
     prevent_initial_call=True,
 )
 def run_optimization(
-    # The parameters below must match the `Input` and `State` variables found
-    # in the `inputs` list above.
     run_click: int,
-    solver_type: Union[SolverType, int],
-    time_limit: float,
-    slider_value: int,
-    dropdown_value: int,
-    checklist_value: list,
-    radio_value: int,
-) -> RunOptimizationReturn:
+    advantage2_system: str,
+    advantage_system: str,
+    anneal_type: Union[AnnealType, int],
+    anneal_time: float,
+    scheme_type: Union[SchemeType, int],
+    precision: int,
+    random_seed: int,
+    intersection_graph: nx.Graph,
+    best_mapping: dict,
+) -> tuple[go.Figure, list]:
     """Runs the optimization and updates UI accordingly.
 
     This is the main function which is called when the ``Run Optimization`` button is clicked.
@@ -127,42 +208,60 @@ def run_optimization(
 
     Args:
         run_click: The (total) number of times the run button has been clicked.
-        solver_type: The solver to use for the optimization run defined by SolverType in demo_enums.py.
-        time_limit: The solver time limit.
-        slider_value: The value of the slider.
-        dropdown_value: The value of the dropdown.
-        checklist_value: A list of the values of the checklist.
-        radio_value: The value of the radio.
+        advantage2_system: The name of the Advantage2 system selected.
+        advantage_system: The name of the Advantage system selected.
+        anneal_type: The AnnealType, either 0: STANDARD or 1: FAST.
+        anneal_time: The anneal time in microseconds.
+        scheme_type: The SchemeType, either 0: UNIFORM or 1: POWER_LAW.
+        precision: The precision for the problem.
+        random_seed: The random seed for the generator.
+        intersection_graph: The chimera intersection graph.
+        best_mapping: The mapping of the chimera intersection graph onto each system
+            (Advantage and Advantage2).
 
     Returns:
-        A NamedTuple (RunOptimizationReturn) containing all outputs to be used when updating the HTML
+        A tuple containing all outputs to be used when updating the HTML
         template (in ``demo_interface.py``). These are:
 
-            results: The results to display in the results tab.
+            fig: The histogram comparing energies.
             problem-details: List of the table rows for the problem details table.
     """
+    scheme_type = SchemeType(scheme_type)
+    anneal_type = AnnealType(anneal_type)
 
-    # Only run optimization code if this function was triggered by a click on `run-button`.
-    # Setting `Input` as exclusively `run-button` and setting `prevent_initial_call=True`
-    # also accomplishes this.
-    if run_click == 0 or ctx.triggered_id != "run-button":
-        raise PreventUpdate
+    generator = (
+        dimod.generators.ran_r if scheme_type is SchemeType.UNIFORM else dimod.generators.power_r
+    )
+    intersection_graph = deserialize(intersection_graph)
+    best_mapping = deserialize(best_mapping)
 
-    solver_type = SolverType(solver_type)
+    bqm = generator(precision, intersection_graph, seed=random_seed)
 
+    pegasus_qpu = DWaveSampler(solver=advantage_system)
+    zephyr_qpu = DWaveSampler(solver=advantage2_system)
 
-    ###########################
-    ### YOUR CODE GOES HERE ###
-    ###########################
+    energies_pegasus, info_pegasus = get_energies(
+        pegasus_qpu,
+        intersection_graph,
+        best_mapping[advantage_system],
+        anneal_time,
+        anneal_type,
+        bqm,
+    )
+    energies_zephyr, info_zephyr = get_energies(
+        zephyr_qpu,
+        intersection_graph,
+        best_mapping[advantage2_system],
+        anneal_time,
+        anneal_type,
+        bqm,
+    )
 
+    fig = plot_solution(advantage_system, advantage2_system, energies_pegasus, energies_zephyr)
 
     # Generates a list of table rows for the problem details table.
-    problem_details_table = generate_problem_details_table_rows(
-        solver=solver_type.label,
-        time_limit=time_limit,
+    problem_details_table = generate_problem_details_table(
+        {advantage2_system: info_zephyr["timing"], advantage_system: info_pegasus["timing"]}
     )
 
-    return RunOptimizationReturn(
-        results="Put demo results here.",
-        problem_details_table=problem_details_table,
-    )
+    return fig, problem_details_table

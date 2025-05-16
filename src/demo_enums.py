@@ -15,21 +15,29 @@
 from enum import Enum
 
 
-class SolverType(Enum):
-    """Add a list of solver options here. If this demo only requires 1 solver,
-    this functionality can be removed.
-    """
+class AnnealType(Enum):
+    """Options for type of annealing."""
 
-    SOLVER_1 = 0
-    SOLVER_2 = 1
+    STANDARD = 0
+    FAST = 1
 
     @property
     def label(self):
         return {
-            SolverType.SOLVER_1: "Solver 1",
-            SolverType.SOLVER_2: "Solver 2",
+            AnnealType.STANDARD: "Standard Anneal",
+            AnnealType.FAST: "Fast Anneal",
         }[self]
 
 
-### If any settings or variables are being used repeatedly, thoughout the code, create a new
-### Enum for the setting here to avoid string comparisons or other fragile code practices.
+class SchemeType(Enum):
+    """The strategy for choosing weights."""
+
+    UNIFORM = 0
+    POWER_LAW = 1
+
+    @property
+    def label(self):
+        return {
+            SchemeType.UNIFORM: "Uniform",
+            SchemeType.POWER_LAW: "Power Law",
+        }[self]

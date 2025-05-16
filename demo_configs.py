@@ -22,37 +22,18 @@ THEME_COLOR_SECONDARY = "#2A7DE1"  # D-Wave blue default #2A7DE1
 
 THUMBNAIL = "static/dwave_logo.svg"
 
-APP_TITLE = "Demo Name"
-MAIN_HEADER = "Demo Name"
+APP_TITLE = "Advantage2"
+MAIN_HEADER = "Advantage2 Performance Comparison"
 DESCRIPTION = """\
-This is a Dash template for new examples. It includes some basic settings, tabs, and styling.
-"""
+Choose an Advantage and Advantage2 system to view the highest-yielded intersection graph and run
+random spin glass problems on both to compares the energies."""
 
 #######################################
 # Sliders, buttons and option entries #
 #######################################
 
-# an example slider
-SLIDER = {
-    "min": 1,
-    "max": 10,
-    "step": 1,
-    "value": 5,
-}
+DEFAULT_ADVANTAGE2 = "Advantage2_system1.1"
+DEFAULT_ADVANTAGE = "Advantage_system4.1"
 
-# an example dropdown
-DROPDOWN = ["Option 1", "Option 2"]
-
-# an example checklist
-CHECKLIST = ["Option 1", "Option 2"]
-
-# an example radio list
-RADIO = ["Option 1", "Option 2"]
-
-# solver time limits in seconds (value means default)
-SOLVER_TIME = {
-    "min": 10,
-    "max": 300,
-    "step": 5,
-    "value": 10,
-}
+PRECISION_OPTIONS = [2 ** n for n in range(11)]
+PRECISION_DEFAULT = 128  # must be included in the list above

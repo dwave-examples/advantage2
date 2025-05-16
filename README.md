@@ -1,28 +1,10 @@
-### Interested in contributing a code example?
+# Advantage2 System: Performance Comparison Against Advantage System
 
-Please take a look at our [contribution guidelines](CONTRIBUTING.md) before getting started.
-Thank you!
-
-The Dash template is intended for demos that would benefit from a user interface. This user
-interface could include settings to run and customize the problem, an interactive graphical element,
-or tables/charts to compare different solutions. This template is also useful for demos that are
-intended for a general audience, as it is more approachable for those without a technical background.
-
-<!-- Before submitting your code, please delete everything above and including this comment. -->
-<!-- The following is a README template for your new demo. -->
-
-# Demo Name
-
-Describe your demo and specify what it is demonstrating. Consider the
-following questions:
-
-* Is it a canonical problem or a real-world application?
-* Does it belong to a particular domain such as material simulation or logistics?
-* What level of Ocean proficiency does it target: beginner, advanced?
-
-A clear description allows us to properly categorize your demo.
-
-Please include a screenshot of your demo below.
+This demo showcases the improved performance of an Advantage2 system, relative to an Advantage
+system, by generating 1000 random spin glass problem samples on a highest-yielded intersecting
+graph and comparing resulting energies of each system. The demo
+allows for customization of Advantage and Advantage2 systems, annealing protocol, and weight
+distribution and precision.
 
 ![Demo Example](static/demo.png)
 
@@ -66,57 +48,46 @@ Configuration options can be found in the [demo_configs.py](demo_configs.py) fil
 with the `--debug` command-line argument for live reloads and easier debugging:
 `python app.py --debug`
 
-<!-- End of boilerplate. -->
-
 ## Problem Description
-Give an overview of the problem you are solving in this demo.
+The Advantage and Advantage2 systems are compared by measuring the energies of 1000 random spin
+glass problem samples of customizable weight precision and distribution.
 
-**Objectives**: define the goal this example attempts to accomplish by minimizing or maximizing
-certain aspects of the problem. For example, a production-line optimization might attempt to
-minimize the time to produce all of the products.
 
-**Constraints**: aspects of the problem, with limited or no flexibility, that must be satisfied for
-solutions to be considered feasible. For example, a production-line optimization might have a
-limitation that Machine A can only bend 10 parts per hour.
+**Advantage2 System:** Choose from a list of Advantage2 systems available through your Leap account.
+D-Wave's Advantage2 system features a Zephyr&trade; topology with over 4,400 qubits and 40,000
+couplers.
 
-## Model Overview
-The clearer your model is presented here, the more useful it will be to others. For a strong example
-of this section, see [here](https://github.com/dwave-examples/3d-bin-packing#model-overview).
+**Advantage System:** Choose from a list of Advantage systems available through your Leap account.
 
-### Parameters
-List and define the parameters used in your model.
+**Weight Distribution:** The strategy for choosing weights.
+- Uniform: Generates problem samples where the weights are sampled uniformly.
+- Power Law: Generates problem samples where the weights are sampled according to a power law
+distribution.
 
-### Variables
-List and define (including type: e.g., "binary" or "integer") the variables solved for in your model.
+For more information, see the
+[documentation](https://docs.dwavequantum.com/en/latest/ocean/api_ref_dimod/generators.html#random)
+on generators.
 
-### Expressions
-List and define any combinations of variables used for easier representations of the models.
+**Weight Precision:** Weights will be chosen between -/+ the precision value, based on the
+distribution above.
 
-### Objective
-Mathematical formulation of the objective described in the previous section using the listed
-parameters, variables, etc.
+**Random Seed:** Allows for repeated problem runs by sampling the weights in predictable manner.
 
-### Constraints
-Mathematical formulation of the constraints described in the previous section using the listed
-parameters, variables, etc.
+**Anneal Type:**
+[Standard](https://docs.dwavequantum.com/en/latest/quantum_research/annealing.html#qpu-annealprotocol-standard)
+or
+[Fast](https://docs.dwavequantum.com/en/latest/quantum_research/annealing.html#qpu-annealprotocol-fast).
+Fast anneal enables anneal execution in a coherent regime (when the anneal is fast enough to have
+minimal interference from its environment) and thus allows for a larger range of values for the
+annealing time.
 
-## Code Overview
-
-A general overview of how the code works.
-
-Include any notable parts of the code implementation:
-
-* Talk about unusual or potentially difficult parts of the code
-* Explain a code decision
-* Explain how parameters were tuned
-
-Note: there is no need to repeat everything that is already well-documented in
-the code.
+**Annealing Time:** Measured in microseconds. Setting "Anneal Type" to "Fast" allows for an expanded
+range of annealing time values.
 
 ## References
 
-A. Person (YEAR), "An Article Title that Helped Formulate the Problem".
-[Link Title](https://example.com/)
+"Performance gains in the D-Wave Advantage2 system at the 4,400-qubit scale", 14-1083A-A
+(D-Wave Whitepaper, 2025).
 
 ## License
 

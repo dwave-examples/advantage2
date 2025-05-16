@@ -14,21 +14,46 @@
 
 """This file stores the Dash HTML layout for the app."""
 from __future__ import annotations
+from enum import Enum
+from typing import Any, Optional, Union
 
 from dash import dcc, html
+import dash_bootstrap_components as dbc
+from dwave.cloud import Client
 
 from demo_configs import (
-    CHECKLIST,
+    DEFAULT_ADVANTAGE,
+    DEFAULT_ADVANTAGE2,
     DESCRIPTION,
-    DROPDOWN,
     MAIN_HEADER,
-    RADIO,
-    SLIDER,
-    SOLVER_TIME,
+    PRECISION_DEFAULT,
+    PRECISION_OPTIONS,
     THEME_COLOR_SECONDARY,
     THUMBNAIL,
 )
-from src.demo_enums import SolverType
+from src.demo_enums import AnnealType, SchemeType
+
+ANNEAL_TIME_RANGES = {}
+
+# Initialize: available QPUs
+try:
+    client = Client.from_config(client="qpu")
+
+    for qpu in client.get_solvers():
+        ANNEAL_TIME_RANGES[qpu.name] = {
+            "fast": qpu.properties["fast_anneal_time_range"],
+            "standard": qpu.properties["annealing_time_range"],
+        }
+
+    qpus = [qpu.name for qpu in client.get_solvers()]
+    ADVANTAGE_SOLVERS = [solver for solver in qpus if solver.split("_")[0] == "Advantage"]
+    ADVANTAGE2_SOLVERS = [solver for solver in qpus if solver.split("_")[0] == "Advantage2"]
+
+    if not len(ADVANTAGE_SOLVERS) or not len(ADVANTAGE2_SOLVERS):
+        raise Exception
+
+except Exception:
+    ADVANTAGE_SOLVERS = ADVANTAGE2_SOLVERS = ["No Leap Access"]
 
 
 def slider(label: str, id: str, config: dict) -> html.Div:
@@ -60,13 +85,14 @@ def slider(label: str, id: str, config: dict) -> html.Div:
     )
 
 
-def dropdown(label: str, id: str, options: list) -> html.Div:
+def dropdown(label: str, id: str, options: list, value: Optional[Any] = None) -> html.Div:
     """Dropdown element for option selection.
 
     Args:
         label: The title that goes above the dropdown.
         id: A unique selector for this element.
         options: A list of dictionaries of labels and values.
+        value: Optional default value.
     """
     return html.Div(
         className="dropdown-wrapper",
@@ -75,34 +101,9 @@ def dropdown(label: str, id: str, options: list) -> html.Div:
             dcc.Dropdown(
                 id=id,
                 options=options,
-                value=options[0]["value"],
+                value=value if value else options[0]["value"],
                 clearable=False,
                 searchable=False,
-            ),
-        ],
-    )
-
-
-def checklist(label: str, id: str, options: list, values: list, inline: bool = True) -> html.Div:
-    """Checklist element for option selection.
-
-    Args:
-        label: The title that goes above the checklist.
-        id: A unique selector for this element.
-        options: A list of dictionaries of labels and values.
-        values: A list of values that should be preselected in the checklist.
-        inline: Whether the options of the checklist are displayed beside or below each other.
-    """
-    return html.Div(
-        className="checklist-wrapper",
-        children=[
-            html.Label(label),
-            dcc.Checklist(
-                id=id,
-                className=f"checklist{' checklist--inline' if inline else ''}",
-                inline=inline,
-                options=options,
-                value=values,
             ),
         ],
     )
@@ -133,9 +134,12 @@ def radio(label: str, id: str, options: list, value: int, inline: bool = True) -
     )
 
 
-def generate_options(options_list: list) -> list[dict]:
+def generate_options(options: Union[list, Enum]) -> list[dict]:
     """Generates options for dropdowns, checklists, radios, etc."""
-    return [{"label": label, "value": i} for i, label in enumerate(options_list)]
+    if isinstance(options, list):
+        return [{"label": option, "value": option} for option in options]
+
+    return [{"label": option.label, "value": option.value} for option in options]
 
 
 def generate_settings_form() -> html.Div:
@@ -144,50 +148,80 @@ def generate_settings_form() -> html.Div:
     Returns:
         html.Div: A Div containing the settings for selecting the scenario, model, and solver.
     """
-    dropdown_options = generate_options(DROPDOWN)
-    checklist_options = generate_options(CHECKLIST)
-    radio_options = generate_options(RADIO)
+    radio_options_anneal = generate_options(AnnealType)
+    radio_options_scheme = generate_options(SchemeType)
+    advantage_options = generate_options(ADVANTAGE_SOLVERS)
+    advantage2_options = generate_options(ADVANTAGE2_SOLVERS)
+    precision_options = generate_options(PRECISION_OPTIONS)
 
-    solver_options = [
-        {"label": solver_type.label, "value": solver_type.value} for solver_type in SolverType
-    ]
+    advantage = (
+        DEFAULT_ADVANTAGE if DEFAULT_ADVANTAGE in ADVANTAGE_SOLVERS else ADVANTAGE_SOLVERS[0]
+    )
+    advantage2 = (
+        DEFAULT_ADVANTAGE2 if DEFAULT_ADVANTAGE2 in ADVANTAGE2_SOLVERS else ADVANTAGE2_SOLVERS[0]
+    )
+
+    min_anneal = max_anneal = 0
+    if advantage.split("_")[0] == "Advantage" and advantage2.split("_")[0] == "Advantage2":
+        min_anneal = max(
+            ANNEAL_TIME_RANGES[advantage]["standard"][0],
+            ANNEAL_TIME_RANGES[advantage2]["standard"][0],
+        )
+        max_anneal = min(
+            ANNEAL_TIME_RANGES[advantage]["standard"][1],
+            ANNEAL_TIME_RANGES[advantage2]["standard"][1],
+        )
 
     return html.Div(
         className="settings",
         children=[
-            slider(
-                "Example Slider",
-                "slider",
-                SLIDER,
+            html.H6("Comparison Systems"),
+            dropdown(
+                "Advantage2",
+                "advantage2-setting",
+                sorted(advantage2_options, key=lambda op: op["value"]),
+                value=advantage2,
             ),
             dropdown(
-                "Example Dropdown",
-                "dropdown",
-                sorted(dropdown_options, key=lambda op: op["value"]),
+                "Advantage",
+                "advantage-setting",
+                sorted(advantage_options, key=lambda op: op["value"]),
+                value=advantage,
             ),
-            checklist(
-                "Example Checklist",
-                "checklist",
-                sorted(checklist_options, key=lambda op: op["value"]),
-                [0],
-            ),
+            html.H6("Optimization Problem"),
             radio(
-                "Example Radio",
-                "radio",
-                sorted(radio_options, key=lambda op: op["value"]),
+                "Weight Distribution",
+                "scheme-type-setting",
+                sorted(radio_options_scheme, key=lambda op: op["value"]),
+                1,
+            ),
+            dropdown(
+                "Weight Precision",
+                "precision-setting",
+                precision_options,
+                value=PRECISION_DEFAULT,
+            ),
+            html.Label("Weight Random Seed (optional)"),
+            dcc.Input(
+                id="random-seed-setting",
+                type="number",
+            ),
+            html.H6("Annealing Protocol"),
+            radio(
+                "Anneal Type",
+                "anneal-type-setting",
+                sorted(radio_options_anneal, key=lambda op: op["value"]),
                 0,
             ),
-            dropdown(
-                "Solver",
-                "solver-type-select",
-                sorted(solver_options, key=lambda op: op["value"]),
-            ),
-            html.Label("Solver Time Limit (seconds)"),
+            html.Label("Annealing Time (microseconds)"),
             dcc.Input(
-                id="solver-time-limit",
+                id="annealing-time-setting",
                 type="number",
-                **SOLVER_TIME,
+                min=min_anneal,
+                max=max_anneal,
+                value=500,
             ),
+            html.P(id="anneal-time-help"),
         ],
     )
 
@@ -197,10 +231,10 @@ def generate_run_buttons() -> html.Div:
     return html.Div(
         id="button-group",
         children=[
-            html.Button(id="run-button", children="Run Optimization", n_clicks=0, disabled=False),
+            html.Button(id="run-button", children="Run Job", n_clicks=0, disabled=True),
             html.Button(
                 id="cancel-button",
-                children="Cancel Optimization",
+                children="Cancel Job",
                 n_clicks=0,
                 className="display-none",
             ),
@@ -208,23 +242,28 @@ def generate_run_buttons() -> html.Div:
     )
 
 
-def generate_problem_details_table_rows(solver: str, time_limit: int) -> list[html.Tr]:
-    """Generates table rows for the problem details table.
+def generate_problem_details_table(info: dict[str, dict]) -> list[html.Thead, html.Tbody]:
+    """Generates table for the problem details table.
 
     Args:
-        solver: The solver used for optimization.
-        time_limit: The solver time limit.
+        info: Dictionary of system keys and timing details dictionaries.
 
     Returns:
-        list[html.Tr]: List of rows for the problem details table.
+        list[html.Thead, html.Tbody]: The table header and body for the problem details table.
     """
+    table_rows = [[key, *list(timing.values())] for key, timing in info.items()]
 
-    table_rows = (
-        ("Solver:", solver, "Time Limit:", f"{time_limit}s"),
-        ### Add more table rows here. Each tuple is a row in the table.
-    )
+    table_headers = ["System"]
+    for time_key in info[table_rows[0][0]].keys():
+        time_key = [t.capitalize() for t in time_key.split("_")]
+        if time_key[0] == "Qpu":
+            time_key[0] = "QPU"
+        table_headers.append(" ".join(time_key))
 
-    return [html.Tr([html.Td(cell) for cell in row]) for row in table_rows]
+    return [
+        html.Thead([html.Tr([html.Th(header) for header in table_headers])]),
+        html.Tbody([html.Tr([html.Td(cell) for cell in row]) for row in table_rows]),
+    ]
 
 
 def problem_details(index: int) -> html.Div:
@@ -246,37 +285,14 @@ def problem_details(index: int) -> html.Div:
                 id={"type": "collapse-trigger", "index": index},
                 className="details-collapse",
                 children=[
-                    html.H5("Problem Details"),
+                    html.H5("Solution Details"),
                     html.Div(className="collapse-arrow"),
                 ],
             ),
             html.Div(
                 className="details-to-collapse",
                 children=[
-                    html.Table(
-                        className="solution-stats-table",
-                        children=[
-                            # Problem details table header (optional)
-                            html.Thead(
-                                [
-                                    html.Tr(
-                                        [
-                                            html.Th(
-                                                colSpan=2,
-                                                children=["Problem Specifics"],
-                                            ),
-                                            html.Th(
-                                                colSpan=2,
-                                                children=["Run Time"],
-                                            ),
-                                        ]
-                                    )
-                                ]
-                            ),
-                            # A Dash callback function will generate content in Tbody
-                            html.Tbody(id="problem-details"),
-                        ],
-                    ),
+                    html.Table(className="solution-stats-table", id="problem-details"),
                 ],
             ),
         ],
@@ -289,7 +305,10 @@ def create_interface():
         id="app-container",
         children=[
             # Below are any temporary storage items, e.g., for sharing data between callbacks.
-            dcc.Store(id="run-in-progress", data=False),  # Indicates whether run is in progress
+            dcc.Store(id="pegasus-qpu"),
+            dcc.Store(id="zephyr-qpu"),
+            dcc.Store(id="chimera-g"),
+            dcc.Store(id="best-mapping"),
             # Header brand banner
             html.Div(className="banner", children=[html.Img(src=THUMBNAIL)]),
             # Settings and results columns
@@ -329,49 +348,91 @@ def create_interface():
                     html.Div(
                         className="right-column",
                         children=[
-                            dcc.Tabs(
-                                id="tabs",
-                                value="input-tab",
-                                mobile_breakpoint=0,
-                                children=[
-                                    dcc.Tab(
-                                        label="Input",
-                                        id="input-tab",
-                                        value="input-tab",  # used for switching tabs programatically
-                                        className="tab",
+                            html.Div(
+                                [
+                                    dbc.Tabs(
                                         children=[
-                                            dcc.Loading(
-                                                parent_className="input",
-                                                type="circle",
-                                                color=THEME_COLOR_SECONDARY,
-                                                # A Dash callback (in app.py) will generate content in the Div below
-                                                children=html.Div(id="input"),
-                                            ),
-                                        ],
-                                    ),
-                                    dcc.Tab(
-                                        label="Results",
-                                        id="results-tab",
-                                        className="tab",
-                                        disabled=True,
-                                        children=[
-                                            html.Div(
-                                                className="tab-content-results",
+                                            dbc.Tab(
                                                 children=[
                                                     dcc.Loading(
-                                                        parent_className="results",
+                                                        parent_className="input",
                                                         type="circle",
                                                         color=THEME_COLOR_SECONDARY,
-                                                        # A Dash callback (in app.py) will generate content in the Div below
-                                                        children=html.Div(id="results"),
-                                                    ),
-                                                    # Problem details dropdown
-                                                    html.Div([html.Hr(), problem_details(1)]),
+                                                        children=[
+                                                            html.Div(
+                                                                className="graph-wrapper",
+                                                                children=[
+                                                                    html.Div(
+                                                                        dcc.Graph(
+                                                                            id="advantage-graph",
+                                                                            responsive=True,
+                                                                            config={
+                                                                                "displayModeBar": False
+                                                                            },
+                                                                        ),
+                                                                        className="graph",
+                                                                    ),
+                                                                    html.Div(
+                                                                        dcc.Graph(
+                                                                            id="advantage2-graph",
+                                                                            responsive=True,
+                                                                            config={
+                                                                                "displayModeBar": False
+                                                                            },
+                                                                        ),
+                                                                        className="graph",
+                                                                    ),
+                                                                ],
+                                                            ),
+                                                        ],
+                                                    )
                                                 ],
-                                            )
+                                                label="Input",
+                                                id="input-tab",
+                                                class_name="tab",
+                                            ),
+                                            dbc.Tab(
+                                                children=[
+                                                    html.Div(
+                                                        className="tab-content-results",
+                                                        children=[
+                                                            html.Div(
+                                                                [
+                                                                    dcc.Loading(
+                                                                        parent_className="results",
+                                                                        type="circle",
+                                                                        color=THEME_COLOR_SECONDARY,
+                                                                        children=html.Div(
+                                                                            html.Div(
+                                                                                dcc.Graph(
+                                                                                    id="results-graph",
+                                                                                    responsive=True,
+                                                                                    config={
+                                                                                        "displayModeBar": False
+                                                                                    },
+                                                                                ),
+                                                                                className="graph",
+                                                                            ),
+                                                                            className="graph-wrapper",
+                                                                        ),
+                                                                    ),
+                                                                    # Problem details dropdown
+                                                                    html.Div([html.Hr(), problem_details(1)]),
+                                                                ]
+                                                            )
+                                                        ],
+                                                    )
+                                                ],
+                                                label="Results",
+                                                id="results-tab",
+                                                class_name="tab",
+                                                disabled=True,
+                                            ),
                                         ],
-                                    ),
+                                        id="tabs",
+                                    )
                                 ],
+                                className="tab-parent"
                             )
                         ],
                     ),

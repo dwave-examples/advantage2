@@ -16,43 +16,46 @@ limitations under the License.
 
 /* Style rules for tabs like the input and results tabs */
 
-.tab-container {
+.nav-tabs {
     border-bottom: 3px solid var(--theme-secondary);
     flex-direction: row;
 }
 
-.tab {
+.nav-item {
+    width: calc(100% / 2);
+}
+
+.nav-link {
     margin: 0 2rem;
     border-top-left-radius: 0.6rem;
     border-top-right-radius: 0.6rem;
+    background-color: #f9f9f9;
+    padding: 20px 25px;
+    text-align: center;
+    border-top-left-radius: 0.6rem !important;
+    border-top-right-radius: 0.6rem !important;
+    color: var(--grey-dark);
 }
 
-div.tab.tab--selected {
+.nav-link:hover {
+    color: var(--grey-dark);
+}
+
+.nav-link.active {
     border: 3px solid var(--theme-secondary) !important;
     border-bottom: none !important;
     cursor: default;
     box-shadow: 0 6px 0 -3px white;
 }
 
-div.tab.tab--disabled {
+.nav-link.disabled {
     cursor: not-allowed !important;
+    pointer-events: initial !important;
+    color: #d6d6d6;
 }
 
-.tab:first-child {
-    margin-right: 1rem;
-}
-
-.tab:last-child {
-    margin-left: 1rem;
-}
-
-.tab-content,
-.tab-parent {
+.tab-content {
     height: 100%;
-}
-
-.tab-content > div:not(.tab-content-results) {
-    height: inherit;
 }
 
 .tab-content {

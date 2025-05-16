@@ -22,27 +22,96 @@ custom CSS can be added below.
 
 .tab-content-results {
     padding: 0 3rem;
+    height: 100%;
+}
+
+.tab-content-results > div {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     height: 100%;
 }
 
-.solution-stats-table td:nth-child(2n) {
-    text-align: right;
-}
-
-.solution-stats-table td:nth-child(2n+1) {
-    border-right: none;
-}
-
-.input, .results {
-    display: flex;
-    justify-content: center;
-    align-items: center;
+.tab,
+.tab > div {
     height: 100%;
 }
 
-  /****************************/
- /*** CUSTOM CSS GOES HERE ***/
-/****************************/
+.tab-parent {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.right-column {
+    overflow-y: auto;
+}
+
+.graph, .dash-graph {
+    height: 100%;
+}
+
+.graph-wrapper {
+    height: 100%;
+}
+
+.input .graph-wrapper {
+    padding-top: 3rem;
+    display: flex;
+}
+
+.input .graph {
+    width: calc(48vw - var(--left-col-width)/2);
+    height: calc(48vw - var(--left-col-width)/2);
+}
+
+.input .dash-graph {
+    position: relative;
+    height: inherit;
+}
+
+.graph-wrapper > div {
+    position: relative;
+}
+
+.results {
+    height: 100%;
+}
+
+#anneal-time-help {
+    font-size: 1.2rem;
+    color: var(--grey-medium);
+}
+
+#annealing-time-setting.error {
+    outline: solid red;
+}
+
+h6 {
+    margin-top: 2rem;
+    border-bottom: 2px solid var(--theme);
+    font-size: 1.6rem;
+    font-weight: 500;
+}
+
+label {
+    margin-top: 1rem;
+}
+
+th, td {
+    font-size: 1.3rem;
+}
+
+.dash-spinner {
+    position: relative;
+}
+
+.input .dash-spinner::after {
+    content: "Calculating intersection graph between Advantage2 and Advantage";
+    position: absolute;
+    font-style: italic;
+    text-align: center;
+    width: 30rem;
+    left: -12rem;
+    bottom: -10rem;
+}
