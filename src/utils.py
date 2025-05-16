@@ -243,6 +243,7 @@ def get_energies(
         num_reads=1000,
         annealing_time=annealing_time,
         fast_anneal=anneal_type is AnnealType.FAST,
+        label="Example - Advantage2 Performance Comparison",
     )
     energies = [
         e

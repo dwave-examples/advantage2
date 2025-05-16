@@ -14,6 +14,8 @@
 
 """This file stores the Dash HTML layout for the app."""
 from __future__ import annotations
+from enum import Enum
+from typing import Any, Optional, Union
 
 from dash import dcc, html
 from dwave.cloud import Client
@@ -43,14 +45,14 @@ try:
         }
 
     qpus = [qpu.name for qpu in client.get_solvers()]
-    advantage_solvers = [solver for solver in qpus if solver.split("_")[0] == "Advantage"]
-    advantage2_solvers = [solver for solver in qpus if solver.split("_")[0] == "Advantage2"]
+    ADVANTAGE_SOLVERS = [solver for solver in qpus if solver.split("_")[0] == "Advantage"]
+    ADVANTAGE2_SOLVERS = [solver for solver in qpus if solver.split("_")[0] == "Advantage2"]
 
-    if not len(advantage_solvers) or not len(advantage2_solvers):
+    if not len(ADVANTAGE_SOLVERS) or not len(ADVANTAGE2_SOLVERS):
         raise Exception
 
 except Exception:
-    advantage_solvers = advantage2_solvers = ["No Leap Access"]
+    ADVANTAGE_SOLVERS = ADVANTAGE2_SOLVERS = ["No Leap Access"]
 
 
 def slider(label: str, id: str, config: dict) -> html.Div:
@@ -147,15 +149,15 @@ def generate_settings_form() -> html.Div:
     """
     radio_options_anneal = generate_options(AnnealType)
     radio_options_scheme = generate_options(SchemeType)
-    advantage_options = generate_options(advantage_solvers)
-    advantage2_options = generate_options(advantage2_solvers)
+    advantage_options = generate_options(ADVANTAGE_SOLVERS)
+    advantage2_options = generate_options(ADVANTAGE2_SOLVERS)
     precision_options = generate_options(PRECISION_OPTIONS)
 
     advantage = (
-        DEFAULT_ADVANTAGE if DEFAULT_ADVANTAGE in advantage_solvers else advantage_solvers[0]
+        DEFAULT_ADVANTAGE if DEFAULT_ADVANTAGE in ADVANTAGE_SOLVERS else ADVANTAGE_SOLVERS[0]
     )
     advantage2 = (
-        DEFAULT_ADVANTAGE2 if DEFAULT_ADVANTAGE2 in advantage2_solvers else advantage2_solvers[0]
+        DEFAULT_ADVANTAGE2 if DEFAULT_ADVANTAGE2 in ADVANTAGE2_SOLVERS else ADVANTAGE2_SOLVERS[0]
     )
 
     min_anneal = max_anneal = 0
