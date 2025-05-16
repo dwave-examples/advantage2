@@ -1,5 +1,6 @@
 import base64
 from collections.abc import Mapping
+from functools import cache
 from typing import Any, Callable
 
 import dill as pickle
@@ -159,7 +160,7 @@ def get_mapping(
 
     return sub_graph, intersection_graph, mapping
 
-
+@cache
 def get_chip_intersection_graph(
     pegasus_qpu_name: str, zephyr_qpu_name: str
 ) -> tuple[go.Figure, go.Figure, nx.Graph, dict[str, Mapping]]:

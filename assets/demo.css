@@ -101,7 +101,7 @@ th, td {
     position: relative;
 }
 
-.dash-spinner::after {
+.input .dash-spinner::after {
     content: "Calculating intersection graph between Advantage2 and Advantage";
     position: absolute;
     font-style: italic;

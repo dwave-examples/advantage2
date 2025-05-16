@@ -18,6 +18,7 @@ from enum import Enum
 from typing import Any, Optional, Union
 
 from dash import dcc, html
+import dash_bootstrap_components as dbc
 from dwave.cloud import Client
 
 from demo_configs import (
@@ -347,16 +348,9 @@ def create_interface():
                     html.Div(
                         className="right-column",
                         children=[
-                            dcc.Tabs(
-                                id="tabs",
-                                value="input-tab",
-                                mobile_breakpoint=0,
+                            dbc.Tabs(
                                 children=[
-                                    dcc.Tab(
-                                        label="Input",
-                                        id="input-tab",
-                                        value="input-tab",  # used for switching tabs programatically
-                                        className="tab",
+                                    dbc.Tab(
                                         children=[
                                             dcc.Loading(
                                                 parent_className="input",
@@ -391,12 +385,11 @@ def create_interface():
                                                 ],
                                             )
                                         ],
+                                        label="Input",
+                                        id="input-tab",
+                                        class_name="tab",
                                     ),
-                                    dcc.Tab(
-                                        label="Results",
-                                        id="results-tab",
-                                        className="tab",
-                                        disabled=True,
+                                    dbc.Tab(
                                         children=[
                                             html.Div(
                                                 className="tab-content-results",
@@ -428,8 +421,14 @@ def create_interface():
                                                 ],
                                             )
                                         ],
+                                        label="Results",
+                                        id="results-tab",
+                                        class_name="tab",
+                                        disabled=True,
                                     ),
                                 ],
+                                id="tabs",
+                                active_tab="input-tab",
                             )
                         ],
                     ),

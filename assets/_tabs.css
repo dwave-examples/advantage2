@@ -16,25 +16,25 @@ limitations under the License.
 
 /* Style rules for tabs like the input and results tabs */
 
-.tab-container {
+.nav-tabs {
     border-bottom: 3px solid var(--theme-secondary);
     flex-direction: row;
 }
 
-.tab {
+.nav-link {
     margin: 0 2rem;
     border-top-left-radius: 0.6rem;
     border-top-right-radius: 0.6rem;
 }
 
-div.tab.tab--selected {
+.nav-link.active {
     border: 3px solid var(--theme-secondary) !important;
     border-bottom: none !important;
     cursor: default;
     box-shadow: 0 6px 0 -3px white;
 }
 
-div.tab.tab--disabled {
+.nav-link.disabled {
     cursor: not-allowed !important;
 }
 
