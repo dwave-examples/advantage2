@@ -1,10 +1,9 @@
 # Advantage2 System: Performance Comparison Against Advantage System
 
 This demo showcases the improved performance of an Advantage2 system, relative to an Advantage
-system, by generating 1000 random spin glass problem samples on a highest-yielded intersecting
-graph and comparing resulting energies of each system. The demo
-allows for customization of Advantage and Advantage2 systems, annealing protocol, and weight
-distribution and precision.
+system, by generating 1000 random spin-glass problem samples on a highest-yielded
+intersecting graph and comparing resulting energies of each system. The demo allows for
+customization of the systems' annealing protocol and the problems' weight distribution and precision.
 
 ![Demo Example](static/demo.png)
 
@@ -49,8 +48,8 @@ with the `--debug` command-line argument for live reloads and easier debugging:
 `python app.py --debug`
 
 ## Problem Description
-The Advantage and Advantage2 systems are compared by measuring the energies of 1000 random spin
-glass problem samples of customizable weight precision and distribution.
+The Advantage and Advantage2 systems are compared by measuring the energies of 1000 random
+spin-glass problem samples of customizable weight precision and distribution.
 
 
 **Advantage2 System:** Choose from a list of Advantage2 systems available through your Leap account.
@@ -87,7 +86,7 @@ range of annealing time values.
 ## References
 
 "Performance gains in the D-Wave Advantage2 system at the 4,400-qubit scale", 14-1083A-A
-(D-Wave Whitepaper, 2025).
+(D-Wave Whitepaper, 2025). https://www.dwavequantum.com/media/wakjcpsf/adv2_4400q_whitepaper-1.pdf
 
 ## License
 
