@@ -26,7 +26,7 @@ APP_TITLE = "Advantage2"
 MAIN_HEADER = "Advantage2 Performance Comparison"
 DESCRIPTION = """\
 Choose an Advantage and Advantage2 system to view the highest-yielded intersection graph and run
-random spin glass problems on both to compare energies."""
+random spin-glass problems on both to compare energies."""
 
 #######################################
 # Sliders, buttons and option entries #
