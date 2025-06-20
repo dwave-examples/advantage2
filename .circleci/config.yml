@@ -7,6 +7,9 @@ workflows:
   version: 2.1
   tests:
     jobs:
-      - dwave/test-linux
-      - dwave/test-osx
-      - dwave/test-win
+      - dwave/test-linux:
+          testing-framework: pytest
+      - dwave/test-osx:
+          testing-framework: pytest
+      - dwave/test-win:
+          testing-framework: pytest
