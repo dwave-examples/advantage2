@@ -32,7 +32,7 @@ random spin-glass problems on both to compare energies."""
 # Sliders, buttons and option entries #
 #######################################
 
-DEFAULT_ADVANTAGE2 = "Advantage2_system1.5"
+DEFAULT_ADVANTAGE2 = "Advantage2_system1.6"
 DEFAULT_ADVANTAGE = "Advantage_system4.1"
 
 PRECISION_OPTIONS = [2 ** n for n in range(11)]
