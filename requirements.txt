@@ -1,5 +1,5 @@
-dwave-ocean-sdk>=7.1.0
+dwave-ocean-sdk~=9.3
 dash[diskcache]~=3.0
 dash-bootstrap-components~=2.0
-plotly>=6.0.0
-pandas>=2.2.0
+plotly~=6.5
+pandas~=3.0
