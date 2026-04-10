@@ -14,16 +14,10 @@
 
 """This file stores input parameters for the app."""
 
-# THEME_COLOR is used for the button, text, and banner and should be dark
-# and pass accessibility checks with white: https://webaim.org/resources/contrastchecker/
-# THEME_COLOR_SECONDARY can be light or dark and is used for sliders, loading icon, and tabs
-THEME_COLOR = "#074C91"  # D-Wave dark blue default #074C91
-THEME_COLOR_SECONDARY = "#2A7DE1"  # D-Wave blue default #2A7DE1
-
 THUMBNAIL = "static/dwave_logo.svg"
 
-APP_TITLE = "Advantage2"
-MAIN_HEADER = "Advantage2 Performance Comparison"
+APP_TITLE = "Performance Comparison"
+MAIN_HEADER = "Performance Comparison"
 DESCRIPTION = """\
 Choose an Advantage and Advantage2 system to view the highest-yielded intersection graph and run
 random spin-glass problems on both to compare energies."""
@@ -32,8 +26,8 @@ random spin-glass problems on both to compare energies."""
 # Sliders, buttons and option entries #
 #######################################
 
-DEFAULT_ADVANTAGE2 = "Advantage2_system1.13"
+DEFAULT_ADVANTAGE2 = "Advantage2_system1"
 DEFAULT_ADVANTAGE = "Advantage_system4.1"
 
 PRECISION_OPTIONS = [2 ** n for n in range(11)]
-PRECISION_DEFAULT = 128  # must be included in the list above
+PRECISION_DEFAULT = "128"  # must be included in the list above

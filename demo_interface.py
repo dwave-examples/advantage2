@@ -14,11 +14,10 @@
 
 """This file stores the Dash HTML layout for the app."""
 from __future__ import annotations
-from enum import Enum
-from typing import Any, Optional, Union
+from enum import EnumMeta
 
 from dash import dcc, html
-import dash_bootstrap_components as dbc
+import dash_mantine_components as dmc
 from dwave.cloud import Client
 
 from demo_configs import (
@@ -28,24 +27,27 @@ from demo_configs import (
     MAIN_HEADER,
     PRECISION_DEFAULT,
     PRECISION_OPTIONS,
-    THEME_COLOR_SECONDARY,
     THUMBNAIL,
 )
 from src.demo_enums import AnnealType, SchemeType
+
+THEME_COLOR = "#2d4376"
 
 ANNEAL_TIME_RANGES = {}
 
 # Initialize: available QPUs
 try:
     client = Client.from_config(client="qpu")
+    qpus = client.get_solvers()
+    qpus = [qpu for qpu in qpus if "internal" not in qpu.name]
 
-    for qpu in client.get_solvers():
+    for qpu in qpus:
         ANNEAL_TIME_RANGES[qpu.name] = {
             "fast": qpu.properties["fast_anneal_time_range"],
             "standard": qpu.properties["annealing_time_range"],
         }
 
-    qpus = [qpu.name for qpu in client.get_solvers()]
+    qpus = [qpu.name for qpu in qpus]
     ADVANTAGE_SOLVERS = [solver for solver in qpus if solver.split("_")[0] == "Advantage"]
     ADVANTAGE2_SOLVERS = [solver for solver in qpus if solver.split("_")[0] == "Advantage2"]
 
@@ -62,54 +64,52 @@ def slider(label: str, id: str, config: dict) -> html.Div:
     Args:
         label: The title that goes above the slider.
         id: A unique selector for this element.
-        config: A dictionary of slider configerations, see dcc.Slider Dash docs.
+        config: A dictionary of slider configurations, see dmc.Slider Dash Mantine docs.
     """
     return html.Div(
         className="slider-wrapper",
         children=[
-            html.Label(label),
-            dcc.Slider(
+            html.Label(label, htmlFor=id),
+            dmc.Slider(
                 id=id,
                 className="slider",
                 **config,
-                marks={
-                    config["min"]: str(config["min"]),
-                    config["max"]: str(config["max"]),
-                },
-                tooltip={
-                    "placement": "bottom",
-                    "always_visible": True,
-                },
+                marks=[
+                    {"value": config["min"], "label": f'{config["min"]}'},
+                    {"value": config["max"], "label": f'{config["max"]}'},
+                ],
+                labelAlwaysOn=True,
+                thumbLabel=f"{label} slider",
+                color=THEME_COLOR,
             ),
         ],
     )
 
 
-def dropdown(label: str, id: str, options: list, value: Optional[Any] = None) -> html.Div:
+def dropdown(label: str, id: str, options: list, value: str | None = None) -> html.Div:
     """Dropdown element for option selection.
 
     Args:
         label: The title that goes above the dropdown.
         id: A unique selector for this element.
         options: A list of dictionaries of labels and values.
-        value: Optional default value.
+        value: The value of the dropdown that should be preselected.
     """
     return html.Div(
         className="dropdown-wrapper",
         children=[
-            html.Label(label),
-            dcc.Dropdown(
+            html.Label(label, htmlFor=id),
+            dmc.Select(
                 id=id,
-                options=options,
+                data=options,
                 value=value if value else options[0]["value"],
-                clearable=False,
-                searchable=False,
+                allowDeselect=False,
             ),
         ],
     )
 
 
-def radio(label: str, id: str, options: list, value: int, inline: bool = True) -> html.Div:
+def radio(label: str, id: str, options: list, value: str, inline: bool = True) -> html.Div:
     """Radio element for option selection.
 
     Args:
@@ -122,24 +122,30 @@ def radio(label: str, id: str, options: list, value: int, inline: bool = True) -
     return html.Div(
         className="radio-wrapper",
         children=[
-            html.Label(label),
-            dcc.RadioItems(
+            dmc.RadioGroup(
                 id=id,
                 className=f"radio{' radio--inline' if inline else ''}",
-                inline=inline,
-                options=options,
+                label=label,
                 value=value,
+                children=dmc.Group(
+                    [
+                        dmc.Radio(option["label"], value=option["value"], color=THEME_COLOR)
+                        for option in options
+                    ]
+                ),
             ),
         ],
     )
 
 
-def generate_options(options: Union[list, Enum]) -> list[dict]:
+def generate_options(options: list | EnumMeta) -> list[dict]:
     """Generates options for dropdowns, checklists, radios, etc."""
-    if isinstance(options, list):
-        return [{"label": option, "value": option} for option in options]
+    if isinstance(options, EnumMeta):
+        return [
+            {"label": option.label, "value": f"{option.value}"} for option in options
+        ]
 
-    return [{"label": option.label, "value": option.value} for option in options]
+    return [{"label": f"{option}", "value": f"{option}"} for option in options]
 
 
 def generate_settings_form() -> html.Div:
@@ -176,45 +182,59 @@ def generate_settings_form() -> html.Div:
         className="settings",
         children=[
             html.H6("Comparison Systems"),
-            dropdown(
-                "Advantage2",
-                "advantage2-setting",
-                sorted(advantage2_options, key=lambda op: op["value"]),
-                value=advantage2,
-            ),
-            dropdown(
-                "Advantage",
-                "advantage-setting",
-                sorted(advantage_options, key=lambda op: op["value"]),
-                value=advantage,
+            html.Div(
+                [
+                    dropdown(
+                        "Advantage2",
+                        "advantage2-setting",
+                        sorted(advantage2_options, key=lambda op: op["value"]),
+                        value=advantage2,
+                    ),
+                    dropdown(
+                        "Advantage",
+                        "advantage-setting",
+                        sorted(advantage_options, key=lambda op: op["value"]),
+                        value=advantage,
+                    ),
+                ],
+                className="settings-flex no-margin-label",
             ),
             html.H6("Optimization Problem"),
             radio(
                 "Weight Distribution",
                 "scheme-type-setting",
                 sorted(radio_options_scheme, key=lambda op: op["value"]),
-                1,
+                "1",
             ),
-            dropdown(
-                "Weight Precision",
-                "precision-setting",
-                precision_options,
-                value=PRECISION_DEFAULT,
-            ),
-            html.Label("Weight Random Seed (optional)"),
-            dcc.Input(
-                id="random-seed-setting",
-                type="number",
+            html.Div(
+                [
+                    dropdown(
+                        "Weight Precision",
+                        "precision-setting",
+                        precision_options,
+                        value=PRECISION_DEFAULT,
+                    ),
+                    html.Div(
+                        [
+                            html.Label("Weight Random Seed", htmlFor="random-seed-setting"),
+                            dmc.NumberInput(
+                                id="random-seed-setting",
+                                type="number",
+                            ),
+                        ]
+                    )
+                ],
+                className="settings-flex",
             ),
             html.H6("Annealing Protocol"),
             radio(
                 "Anneal Type",
                 "anneal-type-setting",
                 sorted(radio_options_anneal, key=lambda op: op["value"]),
-                0,
+                "0",
             ),
-            html.Label("Annealing Time (microseconds)"),
-            dcc.Input(
+            html.Label("Annealing Time (microseconds)", htmlFor="annealing-time-setting"),
+            dmc.NumberInput(
                 id="annealing-time-setting",
                 type="number",
                 min=min_anneal,
@@ -231,12 +251,12 @@ def generate_run_buttons() -> html.Div:
     return html.Div(
         id="button-group",
         children=[
-            html.Button(id="run-button", children="Run Job", n_clicks=0, disabled=True),
+            html.Button("Run Job", id="run-button", className="button"),
             html.Button(
+                "Cancel Job",
                 id="cancel-button",
-                children="Cancel Job",
-                n_clicks=0,
-                className="display-none",
+                className="button",
+                style={"display": "none"},
             ),
         ],
     )
@@ -285,15 +305,14 @@ def problem_details(index: int) -> html.Div:
                 id={"type": "collapse-trigger", "index": index},
                 className="details-collapse",
                 children=[
-                    html.H5("Solution Details"),
+                    html.H5("Problem Details"),
                     html.Div(className="collapse-arrow"),
                 ],
+                **{"aria-expanded": "true"},
             ),
             html.Div(
                 className="details-to-collapse",
-                children=[
-                    html.Table(className="solution-stats-table", id="problem-details"),
-                ],
+                id="problem-details",
             ),
         ],
     )
@@ -304,16 +323,22 @@ def create_interface():
     return html.Div(
         id="app-container",
         children=[
+            html.A(  # Skip link for accessibility
+                "Skip to main content",
+                href="#main-content",
+                id="skip-to-main",
+                className="skip-link",
+                tabIndex=1,
+            ),
             # Below are any temporary storage items, e.g., for sharing data between callbacks.
             dcc.Store(id="pegasus-qpu"),
             dcc.Store(id="zephyr-qpu"),
             dcc.Store(id="chimera-g"),
             dcc.Store(id="best-mapping"),
-            # Header brand banner
-            html.Div(className="banner", children=[html.Img(src=THUMBNAIL)]),
             # Settings and results columns
-            html.Div(
+            html.Main(
                 className="columns-main",
+                id="main-content",
                 children=[
                     # Left column
                     html.Div(
@@ -326,21 +351,46 @@ def create_interface():
                                     html.Div(
                                         className="left-column-layer-2",  # Padding and content wrapper
                                         children=[
-                                            html.H1(MAIN_HEADER),
-                                            html.P(DESCRIPTION),
-                                            generate_settings_form(),
-                                            generate_run_buttons(),
+                                            html.Div(
+                                                [
+                                                    html.H1(MAIN_HEADER),
+                                                    html.P(DESCRIPTION),
+                                                ],
+                                                className="title-section",
+                                            ),
+                                            html.Div(
+                                                [
+                                                    html.Div(
+                                                        html.Div(
+                                                            [
+                                                                generate_settings_form(),
+                                                                generate_run_buttons(),
+                                                            ],
+                                                            className="settings-and-buttons",
+                                                        ),
+                                                        className="settings-and-buttons-wrapper",
+                                                    ),
+                                                    # Left column collapse button
+                                                    html.Div(
+                                                        html.Button(
+                                                            id={
+                                                                "type": "collapse-trigger",
+                                                                "index": 0,
+                                                            },
+                                                            className="left-column-collapse",
+                                                            title="Collapse sidebar",
+                                                            children=[
+                                                                html.Div(className="collapse-arrow")
+                                                            ],
+                                                            **{"aria-expanded": "true"},
+                                                        ),
+                                                    ),
+                                                ],
+                                                className="form-section",
+                                            ),
                                         ],
                                     )
                                 ],
-                            ),
-                            # Left column collapse button
-                            html.Div(
-                                html.Button(
-                                    id={"type": "collapse-trigger", "index": 0},
-                                    className="left-column-collapse",
-                                    children=[html.Div(className="collapse-arrow")],
-                                ),
                             ),
                         ],
                     ),
@@ -348,16 +398,43 @@ def create_interface():
                     html.Div(
                         className="right-column",
                         children=[
-                            html.Div(
-                                [
-                                    dbc.Tabs(
+                            dmc.Tabs(
+                                id="tabs",
+                                value="input-tab",
+                                color="white",
+                                children=[
+                                    html.Header(
+                                        className="banner",
                                         children=[
-                                            dbc.Tab(
+                                            html.Nav(
+                                                [
+                                                    dmc.TabsList(
+                                                        [
+                                                            dmc.TabsTab("Input", value="input-tab"),
+                                                            dmc.TabsTab(
+                                                                "Results",
+                                                                value="results-tab",
+                                                                id="results-tab",
+                                                                disabled=True,
+                                                            ),
+                                                        ]
+                                                    ),
+                                                ]
+                                            ),
+                                            html.Img(src=THUMBNAIL, alt="D-Wave logo"),
+                                        ],
+                                    ),
+                                    dmc.TabsPanel(
+                                        value="input-tab",
+                                        tabIndex="12",
+                                        children=[
+                                            html.Div(
+                                                className="tab-content-wrapper",
                                                 children=[
                                                     dcc.Loading(
                                                         parent_className="input",
                                                         type="circle",
-                                                        color=THEME_COLOR_SECONDARY,
+                                                        color=THEME_COLOR,
                                                         children=[
                                                             html.Div(
                                                                 className="graph-wrapper",
@@ -386,53 +463,42 @@ def create_interface():
                                                             ),
                                                         ],
                                                     )
-                                                ],
-                                                label="Input",
-                                                id="input-tab",
-                                                class_name="tab",
-                                            ),
-                                            dbc.Tab(
-                                                children=[
-                                                    html.Div(
-                                                        className="tab-content-results",
-                                                        children=[
-                                                            html.Div(
-                                                                [
-                                                                    dcc.Loading(
-                                                                        parent_className="results",
-                                                                        type="circle",
-                                                                        color=THEME_COLOR_SECONDARY,
-                                                                        children=html.Div(
-                                                                            html.Div(
-                                                                                dcc.Graph(
-                                                                                    id="results-graph",
-                                                                                    responsive=True,
-                                                                                    config={
-                                                                                        "displayModeBar": False
-                                                                                    },
-                                                                                ),
-                                                                                className="graph",
-                                                                            ),
-                                                                            className="graph-wrapper",
-                                                                        ),
-                                                                    ),
-                                                                    # Problem details dropdown
-                                                                    html.Div([html.Hr(), problem_details(1)]),
-                                                                ]
-                                                            )
-                                                        ],
-                                                    )
-                                                ],
-                                                label="Results",
-                                                id="results-tab",
-                                                class_name="tab",
-                                                disabled=True,
-                                            ),
+                                                ]
+                                            )
                                         ],
-                                        id="tabs",
-                                    )
+                                    ),
+                                    dmc.TabsPanel(
+                                        value="results-tab",
+                                        tabIndex="13",
+                                        children=[
+                                            html.Div(
+                                                className="tab-content-wrapper",
+                                                children=[
+                                                    dcc.Loading(
+                                                        parent_className="results",
+                                                        type="circle",
+                                                        color=THEME_COLOR,
+                                                        children=html.Div(
+                                                            html.Div(
+                                                                dcc.Graph(
+                                                                    id="results-graph",
+                                                                    responsive=True,
+                                                                    config={
+                                                                        "displayModeBar": False
+                                                                    },
+                                                                ),
+                                                                className="graph",
+                                                            ),
+                                                            className="graph-wrapper",
+                                                        ),
+                                                    ),
+                                                    # Problem details dropdown
+                                                    html.Div([html.Hr(), problem_details(1)]),
+                                                ],
+                                            )
+                                        ],
+                                    ),
                                 ],
-                                className="tab-parent"
                             )
                         ],
                     ),
