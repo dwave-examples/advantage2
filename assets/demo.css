@@ -84,6 +84,7 @@ th, td {
     width: 30rem;
     left: -12rem;
     bottom: -10rem;
+    font-family: var(--font) !important;
 }
 
 .settings-flex {

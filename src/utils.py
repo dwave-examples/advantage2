@@ -107,7 +107,7 @@ def get_fig(G: nx.Graph, subG: nx.Graph, node_coords: dict[int, tuple], title: s
                 text=title,
                 font=dict(
                     size=24,
-                    weight="bold",
+                    weight=600,
                     family="proxima-nova, 'Helvetica Neue', sans-serif",
                     color=THEME_COLOR,
                 ),
