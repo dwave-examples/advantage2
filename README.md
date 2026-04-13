@@ -5,7 +5,7 @@ system, by generating 1000 random spin-glass problem samples on a highest-yielde
 intersecting graph and comparing resulting energies of each system. The demo allows for
 customization of the systems' annealing protocol and the problems' weight distribution and precision.
 
-![Demo Example](static/demo.png)
+![Demo Example](static/demo.png "Image of demo interface")
 
 <!-- Below is boilerplate instructions to be included, as is, in the final demo. -->
 
