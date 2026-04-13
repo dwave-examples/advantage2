@@ -13,11 +13,13 @@
 # limitations under the License.
 
 """This file stores the Dash HTML layout for the app."""
+
 from __future__ import annotations
+
 from enum import EnumMeta
 
-from dash import dcc, html
 import dash_mantine_components as dmc
+from dash import dcc, html
 from dwave.cloud import Client
 
 from demo_configs import (
@@ -141,9 +143,7 @@ def radio(label: str, id: str, options: list, value: str, inline: bool = True) -
 def generate_options(options: list | EnumMeta) -> list[dict]:
     """Generates options for dropdowns, checklists, radios, etc."""
     if isinstance(options, EnumMeta):
-        return [
-            {"label": option.label, "value": f"{option.value}"} for option in options
-        ]
+        return [{"label": option.label, "value": f"{option.value}"} for option in options]
 
     return [{"label": f"{option}", "value": f"{option}"} for option in options]
 
@@ -222,7 +222,7 @@ def generate_settings_form() -> html.Div:
                                 type="number",
                             ),
                         ]
-                    )
+                    ),
                 ],
                 className="settings-flex",
             ),
@@ -463,7 +463,7 @@ def create_interface():
                                                             ),
                                                         ],
                                                     )
-                                                ]
+                                                ],
                                             )
                                         ],
                                     ),

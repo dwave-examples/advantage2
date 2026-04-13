@@ -103,7 +103,15 @@ def get_fig(G: nx.Graph, subG: nx.Graph, node_coords: dict[int, tuple], title: s
     fig = go.Figure(
         data=[edge_trace, node_trace, edge_trace_sub, node_trace_sub],
         layout=go.Layout(
-            title=dict(text=title, font=dict(size=24, weight="bold", family="proxima-nova, 'Helvetica Neue', sans-serif", color=THEME_COLOR)),
+            title=dict(
+                text=title,
+                font=dict(
+                    size=24,
+                    weight="bold",
+                    family="proxima-nova, 'Helvetica Neue', sans-serif",
+                    color=THEME_COLOR,
+                ),
+            ),
             showlegend=False,
             hovermode="closest",
             margin=dict(b=20, l=0, r=0, t=40),
@@ -159,6 +167,7 @@ def get_mapping(
     sub_graph = nx.relabel_nodes(intersection_graph, mapping)
 
     return sub_graph, intersection_graph, mapping
+
 
 @cache
 def get_chip_intersection_graph(
