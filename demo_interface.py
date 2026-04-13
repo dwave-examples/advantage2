@@ -241,7 +241,7 @@ def generate_settings_form() -> html.Div:
                 max=max_anneal,
                 value=500,
             ),
-            html.P(id="anneal-time-help"),
+            html.P(id="anneal-time-help", **{"role": "presentation"}),
         ],
     )
 
@@ -277,7 +277,7 @@ def generate_problem_details_table(info: dict[str, dict]) -> list[html.Thead, ht
     for time_key in info[table_rows[0][0]].keys():
         time_key = [t.capitalize() for t in time_key.split("_")]
         if time_key[0] == "Qpu":
-            time_key[0] = "QPU"
+            time_key = time_key[1:]
         table_headers.append(" ".join(time_key))
 
     return [

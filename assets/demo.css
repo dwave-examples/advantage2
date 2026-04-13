@@ -57,7 +57,7 @@ custom CSS can be added below.
 
 #anneal-time-help {
     font-size: 0.875rem;
-    color: var(--grey-medium);
+    color: #656565;
 }
 
 h6 {
@@ -92,4 +92,15 @@ th, td {
 
 .settings-flex.no-margin-label label {
     margin-top: 0;
+}
+
+.details-collapse-wrapper {
+    margin-left: 1.25rem;
+    margin-right: 1.25rem;
+}
+
+.tab-content-wrapper {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - var(--banner-height));
 }
