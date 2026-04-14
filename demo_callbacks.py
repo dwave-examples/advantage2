@@ -73,6 +73,9 @@ def toggle_left_column(collapse_trigger: int, to_collapse_class: str) -> tuple[s
         Input("advantage-setting", "value"),
         Input("advantage2-setting", "value"),
     ],
+    running=[
+        (Output("run-button", "disabled"), True, False),  # Hides run button while running.
+    ],
 )
 def render_initial_state(
     advantage_system: str, advantage2_system: str
