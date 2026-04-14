@@ -40,18 +40,18 @@ ANNEAL_TIME_RANGES = {}
 # Initialize: available QPUs
 try:
     client = Client.from_config(client="qpu")
-    qpus = client.get_solvers()
-    qpus = [qpu for qpu in qpus if "internal" not in qpu.name]
+    qpu_names = []
 
-    for qpu in qpus:
-        ANNEAL_TIME_RANGES[qpu.name] = {
-            "fast": qpu.properties["fast_anneal_time_range"],
-            "standard": qpu.properties["annealing_time_range"],
-        }
+    for qpu in client.get_solvers():
+        if "internal" not in qpu.name:
+            ANNEAL_TIME_RANGES[qpu.name] = {
+                "fast": qpu.properties["fast_anneal_time_range"],
+                "standard": qpu.properties["annealing_time_range"],
+            }
+            qpu_names.append(qpu.name)
 
-    qpus = [qpu.name for qpu in qpus]
-    ADVANTAGE_SOLVERS = [solver for solver in qpus if solver.split("_")[0] == "Advantage"]
-    ADVANTAGE2_SOLVERS = [solver for solver in qpus if solver.split("_")[0] == "Advantage2"]
+    ADVANTAGE_SOLVERS = [solver for solver in qpu_names if solver.split("_")[0] == "Advantage"]
+    ADVANTAGE2_SOLVERS = [solver for solver in qpu_names if solver.split("_")[0] == "Advantage2"]
 
     if not len(ADVANTAGE_SOLVERS) or not len(ADVANTAGE2_SOLVERS):
         raise Exception
