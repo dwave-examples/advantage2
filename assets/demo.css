@@ -20,29 +20,6 @@ The following style rules can be altered or removed and any additional
 custom CSS can be added below.
 *******************************************************************/
 
-.tab-content-results {
-    padding: 0 3rem;
-    height: 100%;
-}
-
-.tab-content-results > div {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    height: 100%;
-}
-
-.tab,
-.tab > div {
-    height: 100%;
-}
-
-.tab-parent {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-}
-
 .right-column {
     overflow-y: auto;
 }
@@ -61,8 +38,8 @@ custom CSS can be added below.
 }
 
 .input .graph {
-    width: calc(48vw - var(--left-col-width)/2);
-    height: calc(48vw - var(--left-col-width)/2);
+    width: calc(50vw - var(--left-col-width)/2);
+    height: calc(50vw - var(--left-col-width)/2);
 }
 
 .input .dash-graph {
@@ -79,27 +56,19 @@ custom CSS can be added below.
 }
 
 #anneal-time-help {
-    font-size: 1.2rem;
-    color: var(--grey-medium);
-}
-
-#annealing-time-setting.error {
-    outline: solid red;
+    font-size: 0.875rem;
+    color: #656565;
 }
 
 h6 {
-    margin-top: 2rem;
-    border-bottom: 2px solid var(--theme);
-    font-size: 1.6rem;
-    font-weight: 500;
-}
-
-label {
-    margin-top: 1rem;
+    margin: 1rem 0;
+    color: var(--blue-darker);
+    border-bottom: 2px solid var(--blue-darker);
+    font-size: 1.125rem;
 }
 
 th, td {
-    font-size: 1.3rem;
+    font-size: 0.8125rem;
 }
 
 .dash-spinner {
@@ -108,10 +77,32 @@ th, td {
 
 .input .dash-spinner::after {
     content: "Calculating intersection graph between Advantage2 and Advantage";
+    color: var(--blue-darkest);
     position: absolute;
     font-style: italic;
     text-align: center;
     width: 30rem;
     left: -12rem;
     bottom: -10rem;
+    font-family: var(--font) !important;
+}
+
+.settings-flex {
+    display: flex;
+    gap: 1rem;
+}
+
+.settings-flex.no-margin-label label {
+    margin-top: 0;
+}
+
+.details-collapse-wrapper {
+    margin-left: 1.25rem;
+    margin-right: 1.25rem;
+}
+
+.tab-content-wrapper {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - var(--banner-height));
 }

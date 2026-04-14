@@ -14,8 +14,6 @@
 
 from __future__ import annotations
 
-from typing import Union
-
 import dash
 import dimod
 import networkx as nx
@@ -38,13 +36,14 @@ from src.utils import (
 
 @dash.callback(
     Output({"type": "to-collapse-class", "index": MATCH}, "className"),
+    Output({"type": "collapse-trigger", "index": MATCH}, "aria-expanded"),
     inputs=[
         Input({"type": "collapse-trigger", "index": MATCH}, "n_clicks"),
         State({"type": "to-collapse-class", "index": MATCH}, "className"),
     ],
     prevent_initial_call=True,
 )
-def toggle_left_column(collapse_trigger: int, to_collapse_class: str) -> str:
+def toggle_left_column(collapse_trigger: int, to_collapse_class: str) -> tuple[str, str]:
     """Toggles a 'collapsed' class that hides and shows some aspect of the UI.
 
     Args:
@@ -54,13 +53,14 @@ def toggle_left_column(collapse_trigger: int, to_collapse_class: str) -> str:
 
     Returns:
         str: The new class name of the thing to collapse.
+        str: The aria-expanded value.
     """
 
     classes = to_collapse_class.split(" ") if to_collapse_class else []
     if "collapsed" in classes:
         classes.remove("collapsed")
-        return " ".join(classes)
-    return to_collapse_class + " collapsed" if to_collapse_class else "collapsed"
+        return " ".join(classes), "true"
+    return to_collapse_class + " collapsed" if to_collapse_class else "collapsed", "false"
 
 
 @dash.callback(
@@ -148,7 +148,7 @@ def update_anneal_time(
         ANNEAL_TIME_RANGES[advantage2_system][anneal_type][1],
     )
 
-    return (min_anneal, max_anneal, f"Must be between {min_anneal} and {max_anneal}")
+    return min_anneal, max_anneal, f"Must be between {min_anneal} and {max_anneal}"
 
 
 @dash.callback(
@@ -178,10 +178,10 @@ def validate_anneal_time(anneal_time: int) -> bool:
         State("best-mapping", "data"),
     ],
     running=[
-        (Output("cancel-button", "className"), "", "display-none"),  # Show/hide cancel button.
-        (Output("run-button", "className"), "display-none", ""),  # Hides run button while running.
+        (Output("cancel-button", "style"), {}, {"display": "none"}),  # Show/hide cancel button.
+        (Output("run-button", "style"), {"display": "none"}, {}),  # Hides run button while running.
         (Output("results-tab", "disabled"), True, False),  # Disables results tab while running.
-        (Output("results-tab", "label"), "Loading...", "Results"),
+        (Output("results-tab", "children"), "Loading...", "Results"),
         (Output("tabs", "value"), "input-tab", "input-tab"),  # Switch to input tab while running.
     ],
     cancel=[Input("cancel-button", "n_clicks")],
@@ -191,10 +191,10 @@ def run_optimization(
     run_click: int,
     advantage2_system: str,
     advantage_system: str,
-    anneal_type: Union[AnnealType, int],
+    anneal_type: str,
     anneal_time: float,
-    scheme_type: Union[SchemeType, int],
-    precision: int,
+    scheme_type: str,
+    precision: str,
     random_seed: int,
     intersection_graph: nx.Graph,
     best_mapping: dict,
@@ -226,8 +226,9 @@ def run_optimization(
             fig: The histogram comparing energies.
             problem-details: List of the table rows for the problem details table.
     """
-    scheme_type = SchemeType(scheme_type)
-    anneal_type = AnnealType(anneal_type)
+    scheme_type = SchemeType(int(scheme_type))
+    anneal_type = AnnealType(int(anneal_type))
+    precision = int(precision)
 
     generator = (
         dimod.generators.ran_r if scheme_type is SchemeType.UNIFORM else dimod.generators.power_r

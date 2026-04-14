@@ -12,7 +12,7 @@ import plotly.graph_objects as go
 from dimod import BinaryQuadraticModel
 from dwave.system import DWaveSampler
 
-from demo_configs import THEME_COLOR, THEME_COLOR_SECONDARY
+from demo_interface import THEME_COLOR
 from src.demo_enums import AnnealType
 
 
@@ -97,13 +97,21 @@ def get_fig(G: nx.Graph, subG: nx.Graph, node_coords: dict[int, tuple], title: s
     """
     edge_trace = get_edge_trace(G, node_coords, "#AAAAAA", 0.5)
     node_trace = get_node_trace(G, node_coords, "#AAAAAA")
-    edge_trace_sub = get_edge_trace(subG, node_coords, THEME_COLOR_SECONDARY, 1)
-    node_trace_sub = get_node_trace(subG, node_coords, THEME_COLOR_SECONDARY)
+    edge_trace_sub = get_edge_trace(subG, node_coords, THEME_COLOR, 1)
+    node_trace_sub = get_node_trace(subG, node_coords, THEME_COLOR)
 
     fig = go.Figure(
         data=[edge_trace, node_trace, edge_trace_sub, node_trace_sub],
         layout=go.Layout(
-            title=dict(text=title, font=dict(size=20, color=THEME_COLOR)),
+            title=dict(
+                text=title,
+                font=dict(
+                    size=24,
+                    weight=600,
+                    family="proxima-nova, 'Helvetica Neue', sans-serif",
+                    color=THEME_COLOR,
+                ),
+            ),
             showlegend=False,
             hovermode="closest",
             margin=dict(b=20, l=0, r=0, t=40),
@@ -159,6 +167,7 @@ def get_mapping(
     sub_graph = nx.relabel_nodes(intersection_graph, mapping)
 
     return sub_graph, intersection_graph, mapping
+
 
 @cache
 def get_chip_intersection_graph(
