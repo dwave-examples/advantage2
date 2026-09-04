@@ -103,10 +103,28 @@ def test_get_mapping():
 @mock.patch("src.utils.get_fig")
 @mock.patch("src.utils.get_mapping")
 @mock.patch("src.utils.DWaveSampler")
-@mock.patch("src.utils.dwave_graphs")
+# utils.py imports these names directly from dwave.graphs, so each one must be patched.
+# With DEFAULT, patch.multiple passes the mocks to the test as keyword args of the same name.
+# They are collected in **dwave_graphs_mocks so pytest doesn't try to resolve them as fixtures.
+@mock.patch.multiple(
+    "src.utils",
+    chimera_graph=mock.DEFAULT,
+    drawing=mock.DEFAULT,
+    pegasus_graph=mock.DEFAULT,
+    pegasus_sublattice_mappings=mock.DEFAULT,
+    zephyr_graph=mock.DEFAULT,
+    zephyr_sublattice_mappings=mock.DEFAULT,
+)
 def test_get_chip_intersection_graph(
-    mock_dwave_graphs, mock_sampler, mock_get_mapping, mock_get_fig
+    mock_sampler, mock_get_mapping, mock_get_fig, **dwave_graphs_mocks
 ):
+    chimera_graph = dwave_graphs_mocks["chimera_graph"]
+    drawing = dwave_graphs_mocks["drawing"]
+    pegasus_graph = dwave_graphs_mocks["pegasus_graph"]
+    pegasus_sublattice_mappings = dwave_graphs_mocks["pegasus_sublattice_mappings"]
+    zephyr_graph = dwave_graphs_mocks["zephyr_graph"]
+    zephyr_sublattice_mappings = dwave_graphs_mocks["zephyr_sublattice_mappings"]
+
     # Set up mock samplers and graphs
     mock_pegasus = mock.Mock()
     mock_zephyr = mock.Mock()
@@ -133,10 +151,10 @@ def test_get_chip_intersection_graph(
     dummy_fig2 = go.Figure()
     mock_get_fig.side_effect = [dummy_fig, dummy_fig2]
 
-    # Set up mock dwave.graphs (module is patched directly, so configure its attributes)
-    mock_dwave_graphs.chimera_graph.return_value = dummy_intersection
-    mock_dwave_graphs.drawing.pegasus_layout.return_value = {}
-    mock_dwave_graphs.drawing.zephyr_layout.return_value = {}
+    # Set up mock dwave.graphs functions
+    chimera_graph.return_value = dummy_intersection
+    drawing.pegasus_layout.return_value = {}
+    drawing.zephyr_layout.return_value = {}
 
     fig, fig2, intersection_graph, mapping_dict = get_chip_intersection_graph(
         "Advantage", "Advantage2"
@@ -147,28 +165,33 @@ def test_get_chip_intersection_graph(
     assert isinstance(intersection_graph, nx.Graph)
     assert mapping_dict == {"Advantage": dummy_mapping, "Advantage2": dummy_mapping}
 
-    # Chimera intersection should be min(17 - 1, 8 * 2) = 16
-    mock_dwave_graphs.chimera_graph.assert_called_once_with(16)
+    # The chimera intersection size is the largest chimera graph that fits both topologies:
+    # min(pegasus shape - 1, zephyr shape * 2) = min(17 - 1, 8 * 2) = 16
+    chimera_graph.assert_called_once_with(16)
+
+    # get_mapping is called once per system, in Pegasus then Zephyr order. Each call receives
+    # that system's QPU graph, the chimera intersection graph, and the topology-specific
+    # sublattice mapper from dwave.graphs.
     mock_get_mapping.assert_has_calls(
         [
             mock.call(
                 mock_pegasus.to_networkx_graph.return_value,
                 dummy_intersection,
-                mock_dwave_graphs.pegasus_sublattice_mappings,
+                pegasus_sublattice_mappings,
             ),
             mock.call(
                 mock_zephyr.to_networkx_graph.return_value,
                 dummy_intersection,
-                mock_dwave_graphs.zephyr_sublattice_mappings,
+                zephyr_sublattice_mappings,
             ),
         ]
     )
-    mock_dwave_graphs.drawing.pegasus_layout.assert_called_once_with(
-        mock_dwave_graphs.pegasus_graph.return_value, crosses=True
-    )
-    mock_dwave_graphs.drawing.zephyr_layout.assert_called_once_with(
-        mock_dwave_graphs.zephyr_graph.return_value
-    )
+
+    # Node coordinates for plotting come from the dwave.graphs layout functions, computed on a
+    # full-size (ideal, defect-free) graph for each topology rather than the QPU's actual graph.
+    # Pegasus is drawn with crosses=True so the layout matches the D-Wave documentation style.
+    drawing.pegasus_layout.assert_called_once_with(pegasus_graph.return_value, crosses=True)
+    drawing.zephyr_layout.assert_called_once_with(zephyr_graph.return_value)
 
 
 def test_get_energies():

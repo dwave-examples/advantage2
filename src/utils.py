@@ -4,12 +4,19 @@ from functools import cache
 from typing import Any, Callable
 
 import dill as pickle
-import dwave.graphs as dwave_graphs
 import networkx as nx
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from dimod import BinaryQuadraticModel
+from dwave.graphs import (
+    chimera_graph,
+    drawing,
+    pegasus_graph,
+    pegasus_sublattice_mappings,
+    zephyr_graph,
+    zephyr_sublattice_mappings,
+)
 from dwave.system import DWaveSampler
 
 from demo_interface import THEME_COLOR
@@ -201,17 +208,17 @@ def get_chip_intersection_graph(
         pegasus_qpu.properties["topology"]["shape"][0] - 1,
         zephyr_qpu.properties["topology"]["shape"][0] * 2,
     )
-    intersection_graph = dwave_graphs.chimera_graph(max_chimera_intersection)
+    intersection_graph = chimera_graph(max_chimera_intersection)
 
     pegasus_sub_g, intersection_graph, pegasus_mapping = get_mapping(
-        pegasus_qpu_g, intersection_graph, dwave_graphs.pegasus_sublattice_mappings
+        pegasus_qpu_g, intersection_graph, pegasus_sublattice_mappings
     )
     zephyr_sub_g, intersection_graph, zephyr_mapping = get_mapping(
-        zephyr_qpu_g, intersection_graph, dwave_graphs.zephyr_sublattice_mappings
+        zephyr_qpu_g, intersection_graph, zephyr_sublattice_mappings
     )
 
-    pegasus_pos = dwave_graphs.drawing.pegasus_layout(dwave_graphs.pegasus_graph(16), crosses=True)
-    zephyr_pos = dwave_graphs.drawing.zephyr_layout(dwave_graphs.zephyr_graph(12))
+    pegasus_pos = drawing.pegasus_layout(pegasus_graph(16), crosses=True)
+    zephyr_pos = drawing.zephyr_layout(zephyr_graph(12))
 
     fig = get_fig(pegasus_qpu_g, pegasus_sub_g, pegasus_pos, pegasus_qpu_name)
     fig2 = get_fig(zephyr_qpu_g, zephyr_sub_g, zephyr_pos, zephyr_qpu_name)
